@@ -1,14 +1,13 @@
-import logo from './assets/logo.png'
+import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import './App.css'
+import './components/Navbar.css'
+
 
 function App() {
   return (
     <div className="app-container">
-      <header className="app-header">
-        <img src={logo} className="logo" alt="Cendres et Vapeur logo" />
-      </header>
-      
+      <Navbar />
       <Home />
     </div>
   )

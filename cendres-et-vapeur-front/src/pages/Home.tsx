@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import type { Product } from '../types/Product';
 import { productService } from '../services/productService';
 
+
 const Home: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
