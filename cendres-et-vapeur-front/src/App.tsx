@@ -1,16 +1,26 @@
-import logo from './assets/logo.png'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import Header from './layout/header/Header'
+import Footer from './layout/footer/Footer'
 import Home from './pages/Home'
+import Login from './pages/auth/login/Login'
+import Register from './pages/auth/register/Register'
 import './App.css'
 
 function App() {
   return (
-    <div className="app-container">
-      <header className="app-header">
-        <img src={logo} className="logo" alt="Cendres et Vapeur logo" />
-      </header>
-      
-      <Home />
-    </div>
+    <BrowserRouter>
+      <div className="app-container">
+        <Header />
+        <main className="main-content">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
+    </BrowserRouter>
   )
 }
 
