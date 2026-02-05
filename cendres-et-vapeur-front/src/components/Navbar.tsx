@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import logo from '../assets/logo.png';
 
 const Navbar: React.FC = () => {
@@ -28,24 +29,24 @@ const Navbar: React.FC = () => {
 
         <ul className={`navbar-menu ${isMenuOpen ? 'active' : ''}`}>
           <li className="navbar-item">
-            <a href="/" className="navbar-link">Accueil</a>
+            <Link to="/" className="navbar-link">Accueil</Link>
           </li>
           <li className="navbar-item">
-            <a href="/shop" className="navbar-link">Boutique</a>
+            <Link to="/shop" className="navbar-link">Boutique</Link>
           </li>
           <li className="navbar-item">
-            <a href="/about" className="navbar-link">À propos</a>
+            <Link to="/about" className="navbar-link">À propos</Link>
           </li>
           <li className="navbar-item">
-            <a href="/contact" className="navbar-link">Contact</a>
+            <Link to="/contact" className="navbar-link">Contact</Link>
           </li>
           <li className="navbar-item navbar-cart">
-            <a href="/cart" className="navbar-link">
+            <Link to="/cart" className="navbar-link">
               panier <span className="cart-count">0</span>
-            </a>
+            </Link>
           </li>
           <li className="navbar-item">
-            <a href ="login" className ="navbar-link">Se connecter</a>
+            <Link to="/login" className="navbar-link">Se connecter</Link>
           </li>
         </ul>
       </div>

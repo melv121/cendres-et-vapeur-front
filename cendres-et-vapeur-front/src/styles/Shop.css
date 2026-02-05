@@ -1,0 +1,200 @@
+.shop-page {
+  min-height: 100vh;
+  padding-bottom: 4rem;
+  background: #0a0806;
+}
+
+.shop-header {
+  background: linear-gradient(135deg, rgba(26, 20, 16, 0.95), rgba(15, 12, 10, 0.98));
+  padding: 4rem 2rem;
+  text-align: center;
+  border-bottom: 3px solid rgba(184, 115, 51, 0.6);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.shop-header h1 {
+  font-size: 4rem;
+  color: #d4955f;
+  text-transform: uppercase;
+  letter-spacing: 6px;
+  margin-bottom: 1rem;
+  text-shadow: 4px 4px 12px rgba(0, 0, 0, 0.9);
+  font-weight: 800;
+}
+
+.shop-subtitle {
+  font-size: 1.4rem;
+  color: #b8b8b8;
+  font-style: italic;
+  letter-spacing: 1px;
+}
+
+.shop-catalog {
+  background-color: #0a0806;
+  padding: 4rem 2rem;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.product-card {
+  background: linear-gradient(145deg, #1a1410, #110d0a);
+  border: 2px solid rgba(184, 115, 51, 0.3);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.product-card:hover {
+  transform: translateY(-8px);
+  border-color: rgba(184, 115, 51, 0.7);
+  box-shadow: 0 12px 30px rgba(184, 115, 51, 0.3);
+}
+
+.product-stock {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(184, 115, 51, 0.95);
+  color: #0a0806;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-weight: bold;
+  border-radius: 20px;
+  font-family: 'Courier New', monospace;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.product-image {
+  width: 100%;
+  height: 260px;
+  overflow: hidden;
+  background: #000;
+  position: relative;
+}
+
+.product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.product-card:hover .product-image img {
+  transform: scale(1.1);
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a1410, #2a2015);
+  color: #666;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.product-card h3 {
+  font-size: 1.4rem;
+  color: #d4955f;
+  margin: 1.2rem 1.5rem 0.8rem;
+  font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: bold;
+}
+
+.product-description {
+  color: #b8b8b8;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0 1.5rem;
+  flex-grow: 1;
+  min-height: 60px;
+}
+
+.price-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.2rem 1.5rem;
+  border-top: 1px solid rgba(184, 115, 51, 0.2);
+  margin-top: 1rem;
+}
+
+.product-price {
+  font-size: 1.8rem;
+  color: #d4955f;
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+}
+
+.product-popularity {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.95rem;
+  color: #ffa500;
+  font-weight: bold;
+}
+
+.product-card .btn-primary {
+  margin: 0 1.5rem 1.5rem;
+  width: calc(100% - 3rem);
+  padding: 0.9rem;
+  background: linear-gradient(135deg, #b87333, #d4955f);
+  color: #0a0806;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Courier New', monospace;
+}
+
+.product-card .btn-primary:hover {
+  background: linear-gradient(135deg, #d4955f, #e8b67a);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(184, 115, 51, 0.4);
+}
+
+.product-card .btn-primary:active {
+  transform: translateY(0);
+}
+
+.loading {
+  text-align: center;
+  font-size: 1.5rem;
+  color: #d4955f;
+  padding: 4rem;
+}
+
+@media (max-width: 768px) {
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .shop-header h1 {
+    font-size: 2.5rem;
+  }
+
+  .product-image {
+    height: 220px;
+  }
+}
