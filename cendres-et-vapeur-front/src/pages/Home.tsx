@@ -57,7 +57,7 @@ const Home: React.FC = () => {
                 <h3>Engrenage en Cuivre</h3>
                 <p className="product-description">Mécanisme forgé à la main, récupéré des anciennes usines</p>
                 <div className="product-footer">
-                  <span className="product-price">45 Cu</span>
+                  <span className="product-price">45€</span>
                   <button className="add-to-cart">Ajouter</button>
                 </div>
               </div>
@@ -127,7 +127,7 @@ const Home: React.FC = () => {
                 <h3>Kit de Survie</h3>
                 <p className="product-description">Ensemble complet d'outils pour survivant</p>
                 <div className="product-footer">
-                  <span className="product-price">95 Cu</span>
+                  <span className="product-price">95€</span>
                   <button className="add-to-cart">Ajouter</button>
                 </div>
               </div>
