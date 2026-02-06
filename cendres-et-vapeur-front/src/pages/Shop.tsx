@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { Product } from '../types/Product';
 import { getAllShopProducts } from '../services/productShop';
 import '../styles/Shop.css';
@@ -37,29 +38,35 @@ const Shop = () => {
           ) : (
             <div className="product-grid">
               {products.map((product) => (
-                <div key={product.id} className="product-card">
-                  <div className="product-stock">Stock: {product.stock}</div>
-                  
-                  <div className="product-image">
-                    {product.image ? (
-                      <img src={product.image} alt={product.name} />
-                    ) : (
-                      <div className="image-placeholder">IMAGE</div>
-                    )}
-                  </div>
-                  
-                  <h3>{product.name}</h3>
-                  <p className="product-description">{product.description}</p>
-                  
-                  <div className="price-section">
-                    <div className="product-price">{product.current_price} €</div>
-                    <div className="product-popularity">
-                    {product.popularity_score}
+                <Link 
+                  key={product.id} 
+                  to={`/product/${product.id}`}
+                  className="product-card-link"
+                >
+                  <div className="product-card">
+                    <div className="product-stock">Stock: {product.stock}</div>
+                    
+                    <div className="product-image">
+                      {product.image ? (
+                        <img src={product.image} alt={product.name} />
+                      ) : (
+                        <div className="image-placeholder">IMAGE</div>
+                      )}
                     </div>
+                    
+                    <h3>{product.name}</h3>
+                    <p className="product-description">{product.description}</p>
+                    
+                    <div className="price-section">
+                      <div className="product-price">{product.current_price} €</div>
+                      <div className="product-popularity">
+                      {product.popularity_score}
+                      </div>
+                    </div>
+                    
+                    <button className="btn-primary">Voir les détails</button>
                   </div>
-                  
-                  <button className="btn-primary">Ajouter au panier</button>
-                </div>
+                </Link>
               ))}
             </div>
           )}
