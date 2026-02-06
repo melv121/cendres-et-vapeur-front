@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Shop from './pages/Shop'
 import ProductDetail from './pages/ProductDetail'
+import Cart from './pages/Cart'
+import Infos from './pages/infos'
 import Navbar from './components/Navbar'
 import './components/Navbar.css'
 import Footer from './layout/footer/Footer'
@@ -21,6 +23,8 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/shop" element={<Shop />} />
             <Route path="/product/:id" element={<ProductDetail />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/about" element={<Infos />} />
           </Routes>
         </main>
         <Footer />
