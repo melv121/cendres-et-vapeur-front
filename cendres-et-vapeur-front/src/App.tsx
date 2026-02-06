@@ -5,6 +5,7 @@ import Home from './pages/Home'
 import Login from './pages/auth/login/Login'
 import Register from './pages/auth/register/Register'
 import Contact from './pages/Contact' 
+import AdminPage from './pages/Admin'
 import './App.css'
 
 function App() {
@@ -18,6 +19,8 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/admin" element={<AdminPage/>} />
+
           </Routes>
         </main>
         <Footer />
