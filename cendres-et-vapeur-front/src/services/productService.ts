@@ -66,7 +66,8 @@ const MOCK_PRODUCTS: Product[] = [
     stock: 7,
     popularity_score: 9.5,
     category_id: 6
-  }
+  },
+  
 ];
 
 export const productService = {
