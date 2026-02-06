@@ -4,7 +4,6 @@ const Infos = () => {
   return (
     <div className="infos-page">
       <div className="infos-container">
-        {/* Hero Section */}
         <section className="hero-section">
           <h1 className="main-title">Cendres et Vapeur</h1>
           <p className="subtitle">Le Marché de la Dernière Colonie</p>

@@ -10,6 +10,9 @@ import Home from './pages/Home'
 import Login from './pages/auth/login/Login'
 import Register from './pages/auth/register/Register'
 import './App.css'
+import Admin from './pages/Admin'
+
+
 
 function App() {
   return (
@@ -25,6 +28,8 @@ function App() {
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/about" element={<Infos />} />
+            <Route path="/admin" element={<Admin/>} />
+
           </Routes>
         </main>
         <Footer />
