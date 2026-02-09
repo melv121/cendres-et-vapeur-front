@@ -1,24 +1,61 @@
 import { useState } from "react";
-import type { Product } from "../AdminProducts";
 import "../admin.css";
+
+// Type produit local - compatible avec AdminProduct.tsx
+export type Product = {
+  id: number;
+  name: string;
+  description?: string;
+  price: number;
+  stock: number;
+  category_id?: number;
+  status: "ACTIVE" | "HIDDEN";
+};
+
+type EditProductModalProps =
+  | {
+      product: Product;
+      onClose: () => void;
+      onSave: (p: Product) => Promise<void> | void;
+      onCreate?: never;
+    }
+  | {
+      product: null;
+      onClose: () => void;
+      onSave?: never;
+      onCreate: (p: Omit<Product, "id">) => Promise<void> | void;
+    };
+
+const emptyProduct: Omit<Product, "id"> = {
+  name: "",
+  description: "",
+  price: 0,
+  stock: 0,
+  category_id: 1,
+  status: "ACTIVE",
+};
 
 export default function EditProductModal({
   product,
   onClose,
   onSave,
-}: {
-  product: Product;
-  onClose: () => void;
-  onSave: (p: Product) => Promise<void> | void;
-}) {
-  const [form, setForm] = useState<Product>({ ...product });
+  onCreate,
+}: EditProductModalProps) {
+  const isCreating = product === null;
+  const [form, setForm] = useState<Product | Omit<Product, "id">>(
+    product ? { ...product } : { ...emptyProduct }
+  );
   const [saving, setSaving] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
-      await onSave(form);
+      if (isCreating && onCreate) {
+        await onCreate(form as Omit<Product, "id">);
+      } else if (onSave) {
+        await onSave(form as Product);
+      }
     } finally {
       setSaving(false);
     }
@@ -28,7 +65,7 @@ export default function EditProductModal({
     <div className="admModalBackdrop" onMouseDown={onClose}>
       <div className="admModal" onMouseDown={(e) => e.stopPropagation()}>
         <div className="admModalHead">
-          <h3>Éditer Produit</h3>
+          <h3>{isCreating ? "Nouveau Produit" : "Éditer Produit"}</h3>
           <button className="admIconBtn" onClick={onClose} aria-label="Fermer">
             ✕
           </button>

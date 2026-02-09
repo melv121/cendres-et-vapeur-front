@@ -1,23 +1,27 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import Header from "./layout/header/Header";
+import Header from "./components/Navbar";
 import Footer from "./layout/footer/Footer";
 
 import AdminHeader from "./layout/admin/AdminHeader";
 import AdminFooter from "./layout/admin/AdminFooter";
-
+import Infos from "./pages/infos";
 import Home from "./pages/Home";
+import Shop from "./pages/Shop";
 import Login from "./pages/auth/login/Login";
 import Register from "./pages/auth/register/Register";
 import Contact from "./pages/Contact";
 import AdminPage from "./pages/Admin";
+import Cart from "./pages/Cart";
 
-import AdminProductsPage from "./pages/admin/AdminProductsPage";
-import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminChatPage from "./pages/admin/AdminChatPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import OrdersPage from "./pages/admin/OrdersPage";
 import JournalPage from "./pages/admin/JournalPage";
 import CalendarPage from "./pages/admin/CalendarPage";
+
+// Composants admin directs (avec API)
+import AdminProducts from "./components/admin/AdminProduct";
+import AdminUsers from "./components/admin/AdminUsers";
 
 
 
@@ -38,9 +42,12 @@ function AppContent() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/infos" element={<Infos />} />
+          <Route path="/shop" element={<Shop />} />
+          <Route path="/cart" element={<Cart />} />
           <Route path="/admin" element={<AdminPage />} />
-          <Route path="/admin/produits" element={<AdminProductsPage />} />
-          <Route path="/admin/utilisateurs" element={<AdminUsersPage />} />
+          <Route path="/admin/produits" element={<AdminProducts/>} />
+          <Route path="/admin/utilisateurs" element={<AdminUsers />} />
           <Route path="/admin/messages" element={<AdminChatPage />} />
           <Route path="/admin" element={<AdminDashboardPage />} />
 
