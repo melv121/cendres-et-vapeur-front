@@ -1,13 +1,15 @@
 import { useMemo, useState, useEffect } from "react";
 import EditProductModal from "./modals/EditProductModal";
-import { getProducts, updateProduct, deleteProduct } from "../../api/api";
+import { getProducts, createProduct, updateProduct, deleteProduct } from "../../api/api";
 import "./admin.css";
 
 export type Product = {
   id: number;
   name: string;
+  description?: string;
   price: number;
   stock: number;
+  category_id?: number;
   status: "ACTIVE" | "HIDDEN";
 };
 
@@ -16,6 +18,7 @@ export default function AdminProducts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Product | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
   const total = useMemo(() => rows.length, [rows]);
 
@@ -49,10 +52,39 @@ export default function AdminProducts() {
     fetchProducts();
   }, []);
 
+  // Créer un nouveau produit
+  const onCreate = async (p: Omit<Product, 'id'>) => {
+    try {
+      const newProduct = await createProduct({
+        name: p.name,
+        description: p.description || '',
+        category_id: p.category_id || 1,
+        stock: p.stock,
+        base_price: p.price,
+        current_price: p.price,
+        popularity_score: 0,
+      });
+      // Ajouter le nouveau produit à la liste
+      setRows((prev) => [...prev, {
+        id: newProduct.id,
+        name: newProduct.name,
+        description: newProduct.description,
+        price: newProduct.current_price,
+        stock: newProduct.stock,
+        category_id: newProduct.category_id,
+        status: newProduct.stock > 0 ? 'ACTIVE' : 'HIDDEN',
+      }]);
+      setIsCreating(false);
+    } catch (err: any) {
+      alert('Erreur lors de la création: ' + err.message);
+    }
+  };
+
   const onSave = async (p: Product) => {
     try {
       await updateProduct(p.id, {
         name: p.name,
+        description: p.description,
         current_price: p.price,
         stock: p.stock,
       });
@@ -102,13 +134,22 @@ export default function AdminProducts() {
           <p>{total} produit(s)</p>
         </div>
 
-        <button
-          className="admBtn"
-          onClick={fetchProducts}
-          title="Actualiser les données"
-        >
-          Actualiser
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            className="admBtn"
+            onClick={() => setIsCreating(true)}
+            title="Ajouter un nouveau produit"
+          >
+            + Ajouter
+          </button>
+          <button
+            className="admBtn ghost"
+            onClick={fetchProducts}
+            title="Actualiser les données"
+          >
+            Actualiser
+          </button>
+        </div>
       </div>
 
       <div className="admTableWrap">
@@ -167,6 +208,14 @@ export default function AdminProducts() {
           product={selected}
           onClose={() => setSelected(null)}
           onSave={onSave}
+        />
+      )}
+
+      {isCreating && (
+        <EditProductModal
+          product={null}
+          onClose={() => setIsCreating(false)}
+          onCreate={onCreate}
         />
       )}
     </div>
