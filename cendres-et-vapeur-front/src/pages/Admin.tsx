@@ -12,12 +12,11 @@ export default function Admin() {
 
   return (
     <div className="adminPage">
-      <header className="adminHeader">
-        <div className="adminTitle">
-          <h1>Dashboard Admin</h1>
-          <p>Outils pour les grades élevés (Éditeurs / Admins)</p>
-        </div>
+      
 
+      <main className="adminGrid">
+        <section className="adminPanel">
+          
         <div className="adminTabs">
           <button
             className={tab === "products" ? "active" : ""}
@@ -32,10 +31,6 @@ export default function Admin() {
             Utilisateurs
           </button>
         </div>
-      </header>
-
-      <main className="adminGrid">
-        <section className="adminPanel">
           {tab === "products" ? <AdminProducts /> : <AdminUsers />}
         </section>
 
