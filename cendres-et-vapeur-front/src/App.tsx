@@ -1,35 +1,73 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import Header from "./components/Navbar";
+import Footer from "./layout/footer/Footer";
 
-function App() {
-  const [count, setCount] = useState(0)
+import AdminHeader from "./layout/admin/AdminHeader";
+import AdminFooter from "./layout/admin/AdminFooter";
+import Infos from "./pages/infos";
+import Home from "./pages/Home";
+import Shop from "./pages/Shop";
+import Login from "./pages/auth/login/Login";
+import Register from "./pages/auth/register/Register";
+import Contact from "./pages/Contact";
+import AdminPage from "./pages/Admin";
+import Cart from "./pages/Cart";
+
+import AdminChatPage from "./pages/admin/AdminChatPage";
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import OrdersPage from "./pages/admin/OrdersPage";
+import JournalPage from "./pages/admin/JournalPage";
+import CalendarPage from "./pages/admin/CalendarPage";
+
+// Composants admin directs (avec API)
+import AdminProducts from "./components/admin/AdminProduct";
+import AdminUsers from "./components/admin/AdminUsers";
+
+
+
+
+import "./App.css";
+
+function AppContent() {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith("/admin");
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className="app-container">
+      {isAdminRoute ? <AdminHeader /> : <Header />}
+
+      <main className="main-content">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/infos" element={<Infos />} />
+          <Route path="/shop" element={<Shop />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/admin/produits" element={<AdminProducts/>} />
+          <Route path="/admin/utilisateurs" element={<AdminUsers />} />
+          <Route path="/admin/messages" element={<AdminChatPage />} />
+          <Route path="/admin" element={<AdminDashboardPage />} />
+
+          <Route path="/admin/commandes" element={<OrdersPage />} />
+          <Route path="/admin/journal" element={<JournalPage />} />
+          <Route path="/admin/calendrier" element={<CalendarPage />} />
+
+
+        </Routes>
+      </main>
+
+      {isAdminRoute ? <AdminFooter /> : <Footer />}
+    </div>
+  );
 }
 
-export default App
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
+  );
+}
