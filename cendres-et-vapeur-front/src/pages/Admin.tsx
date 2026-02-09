@@ -1,6 +1,6 @@
 import { useState } from "react";
 import AdminProducts from "../components/admin/AdminProduct";
-import AdminUsers from "../components/admin/AminUsers";
+import AdminUsers from "../components/admin/AdminUsers";
 import TelegraphChat from "../components/admin/TelegraphChat";
 import SurvivorsLogWidget from "../components/admin/SurvivorsLogWidget";
 import "../components/admin/admin.css";

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { Product } from '../types/Product';
 import { productService } from '../services/productService';
 
@@ -31,9 +32,9 @@ const Home: React.FC = () => {
           <p className="hero-tagline">
             Le marché post-apocalyptique où le cuivre est roi
           </p>
-          <button className="cta-button" aria-label="Découvrir nos produits">
+          <Link to="/shop" className="cta-button" aria-label="Découvrir nos produits">
             Voir nos produits
-          </button>
+          </Link>
         </div>
       </section>
       

@@ -1,43 +1,42 @@
-import { useMemo, useState, useEffect } from "react";
-import EditProductModal from "./modals/EditProductModal";
-import { getProducts, updateProduct, deleteProduct } from "../../api/api";
+import { useState, useEffect } from "react";
+import EditUserModal from "./modals/EditUserModal";
+import { getUsers, updateUser, deleteUser } from "../../api/api";
 import "./admin.css";
 
-export type Product = {
+export type AdminUser = {
   id: number;
-  name: string;
-  price: number;
-  stock: number;
-  status: "ACTIVE" | "HIDDEN";
+  email: string;
+  fullName: string;
+  username?: string;
+  role: "USER" | "EDITOR" | "ADMIN";
+  active: boolean;
 };
 
-export default function AdminProducts() {
-  const [rows, setRows] = useState<Product[]>([]);
+export default function AdminUsers() {
+  const [rows, setRows] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selected, setSelected] = useState<Product | null>(null);
+  const [selected, setSelected] = useState<AdminUser | null>(null);
 
-  const total = useMemo(() => rows.length, [rows]);
-
-  // Charger les produits depuis l'API
-  const fetchProducts = async () => {
+  // Charger les utilisateurs depuis l'API
+  const fetchUsers = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await getProducts();
-      // L'API retourne directement un tableau de produits
-      const data = Array.isArray(response) ? response : (response.products || []);
+      const response = await getUsers();
+      // L'API retourne { success: true, users: [...] }
+      const data = response.users || response || [];
       // Adapter les données de l'API au format du composant
-      const products = data.map((product: any) => ({
-        id: product.id,
-        name: product.name || 'Sans nom',
-        price: product.current_price || product.price || 0,
-        stock: product.stock || 0,
-        status: product.stock > 0 ? 'ACTIVE' : 'HIDDEN',
+      const users = data.map((user: any) => ({
+        id: user.id,
+        email: user.email,
+        fullName: user.username || user.fullName || 'Sans nom',
+        role: user.role?.toUpperCase() || 'USER',
+        active: user.active !== false,
       }));
-      setRows(products);
+      setRows(users);
     } catch (err: any) {
-      setError(err.message || 'Erreur lors du chargement des produits');
+      setError(err.message || 'Erreur lors du chargement des utilisateurs');
       console.error('Erreur API:', err);
     } finally {
       setLoading(false);
@@ -46,17 +45,18 @@ export default function AdminProducts() {
 
   // Charger les données au montage du composant
   useEffect(() => {
-    fetchProducts();
+    fetchUsers();
   }, []);
 
-  const onSave = async (p: Product) => {
+  const onSave = async (u: AdminUser) => {
     try {
-      await updateProduct(p.id, {
-        name: p.name,
-        current_price: p.price,
-        stock: p.stock,
+      await updateUser(u.id, {
+        email: u.email,
+        username: u.fullName,
+        role: u.role.toLowerCase(),
+        active: u.active,
       });
-      setRows((prev) => prev.map((x) => (x.id === p.id ? p : x)));
+      setRows((prev) => prev.map((x) => (x.id === u.id ? u : x)));
       setSelected(null);
     } catch (err: any) {
       alert('Erreur lors de la sauvegarde: ' + err.message);
@@ -64,9 +64,9 @@ export default function AdminProducts() {
   };
 
   const onDelete = async (id: number) => {
-    if (!confirm('Supprimer ce produit ?')) return;
+    if (!confirm('Supprimer cet utilisateur ?')) return;
     try {
-      await deleteProduct(id);
+      await deleteUser(id);
       setRows((prev) => prev.filter((x) => x.id !== id));
     } catch (err: any) {
       alert('Erreur lors de la suppression: ' + err.message);
@@ -76,7 +76,7 @@ export default function AdminProducts() {
   if (loading) {
     return (
       <div className="admBlock">
-        <p style={{ textAlign: 'center', padding: '2rem' }}>Chargement des produits...</p>
+        <p style={{ textAlign: 'center', padding: '2rem' }}>Chargement des utilisateurs...</p>
       </div>
     );
   }
@@ -87,7 +87,7 @@ export default function AdminProducts() {
         <p style={{ textAlign: 'center', padding: '2rem', color: '#d4955f' }}>
           Erreur: {error}
         </p>
-        <button className="admBtn" onClick={fetchProducts} style={{ display: 'block', margin: '0 auto' }}>
+        <button className="admBtn" onClick={fetchUsers} style={{ display: 'block', margin: '0 auto' }}>
           Réessayer
         </button>
       </div>
@@ -98,15 +98,11 @@ export default function AdminProducts() {
     <div className="admBlock">
       <div className="admBlockHead">
         <div>
-          <h2>Gestion Produits</h2>
-          <p>{total} produit(s)</p>
+          <h2>Gestion Utilisateurs</h2>
+          <p>{rows.length} utilisateur(s)</p>
         </div>
 
-        <button
-          className="admBtn"
-          onClick={fetchProducts}
-          title="Actualiser les données"
-        >
+        <button className="admBtn" onClick={fetchUsers}>
           Actualiser
         </button>
       </div>
@@ -116,10 +112,10 @@ export default function AdminProducts() {
           <thead>
             <tr>
               <th>ID</th>
+              <th>Email</th>
               <th>Nom</th>
-              <th>Prix</th>
-              <th>Stock</th>
-              <th>Statut</th>
+              <th>Rôle</th>
+              <th>Actif</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -128,18 +124,22 @@ export default function AdminProducts() {
             {rows.map((r) => (
               <tr key={r.id}>
                 <td className="mono">{r.id}</td>
-                <td>{r.name}</td>
-                <td>{r.price} €</td>
-                <td>{r.stock}</td>
+                <td className="mono">{r.email}</td>
+                <td>{r.fullName}</td>
                 <td>
                   <span
                     className={`pill ${
-                      r.status === "ACTIVE" ? "ok" : "warn"
+                      r.role === "ADMIN"
+                        ? "ok"
+                        : r.role === "EDITOR"
+                        ? "mid"
+                        : "plain"
                     }`}
                   >
-                    {r.status}
+                    {r.role}
                   </span>
                 </td>
+                <td>{r.active ? "oui" : "non"}</td>
                 <td>
                   <button className="admBtn ghost" onClick={() => setSelected(r)}>
                     Éditer
@@ -154,7 +154,7 @@ export default function AdminProducts() {
             {rows.length === 0 && (
               <tr>
                 <td colSpan={6} className="empty">
-                  Aucun produit.
+                  Aucun utilisateur.
                 </td>
               </tr>
             )}
@@ -163,8 +163,8 @@ export default function AdminProducts() {
       </div>
 
       {selected && (
-        <EditProductModal
-          product={selected}
+        <EditUserModal
+          user={selected}
           onClose={() => setSelected(null)}
           onSave={onSave}
         />
