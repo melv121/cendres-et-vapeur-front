@@ -16,6 +16,7 @@ const defaultProduct: Omit<Product, 'id'> = {
   stock: 0,
   category_id: 1,
   status: 'ACTIVE',
+  image_url: '',
 };
 
 export default function EditProductModal({
@@ -29,6 +30,29 @@ export default function EditProductModal({
     product ? { ...product } : { ...defaultProduct }
   );
   const [saving, setSaving] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string>(product?.image_url || '');
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Image trop volumineuse (max 2MB)');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        setForm({ ...form, image_url: base64 });
+        setImagePreview(base64);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUrlChange = (url: string) => {
+    setForm({ ...form, image_url: url });
+    setImagePreview(url);
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,8 +75,8 @@ export default function EditProductModal({
   };
 
   return (
-    <div className="admModalBackdrop" onMouseDown={onClose}>
-      <div className="admModal" onMouseDown={(e) => e.stopPropagation()}>
+    <div className="admModalBackdrop" onClick={onClose}>
+      <div className="admModal" onClick={(e) => e.stopPropagation()}>
         <div className="admModalHead">
           <h3>{isCreating ? 'Créer un Produit' : 'Éditer Produit'}</h3>
           <button className="admIconBtn" onClick={onClose} aria-label="Fermer">
@@ -132,6 +156,48 @@ export default function EditProductModal({
               <option value="ACTIVE">ACTIVE</option>
               <option value="HIDDEN">HIDDEN</option>
             </select>
+          </label>
+
+          <label>
+            Image du produit
+            <div className="image-upload-section">
+              <div className="image-upload-buttons">
+                <label className="admBtn ghost" style={{ cursor: 'pointer', display: 'inline-block' }}>
+                  📁 Choisir un fichier
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+              </div>
+              <input
+                type="text"
+                value={form.image_url || ''}
+                onChange={(e) => handleUrlChange(e.target.value)}
+                placeholder="Ou entrez une URL d'image"
+                style={{ marginTop: '8px' }}
+              />
+              {imagePreview && (
+                <div className="image-preview" style={{ marginTop: '10px' }}>
+                  <img 
+                    src={imagePreview} 
+                    alt="Aperçu" 
+                    style={{ maxWidth: '100%', maxHeight: '150px', border: '2px solid #8b5a2b' }}
+                    onError={() => setImagePreview('')}
+                  />
+                  <button 
+                    type="button" 
+                    className="admBtn ghost" 
+                    onClick={() => { setForm({ ...form, image_url: '' }); setImagePreview(''); }}
+                    style={{ marginTop: '8px' }}
+                  >
+                    🗑️ Supprimer l'image
+                  </button>
+                </div>
+              )}
+            </div>
           </label>
 
           <div className="admActions">

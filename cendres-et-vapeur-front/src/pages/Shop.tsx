@@ -7,6 +7,7 @@ import '../styles/Shop.css';
 const Shop = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadProducts();
@@ -15,10 +16,12 @@ const Shop = () => {
   const loadProducts = async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await getAllShopProducts();
       setProducts(data);
-    } catch (error) {
-      console.error('Erreur lors du chargement des produits:', error);
+    } catch (err) {
+      console.error('Erreur lors du chargement des produits:', err);
+      setError('Impossible de charger les produits. Vérifiez votre connexion.');
     } finally {
       setLoading(false);
     }
@@ -35,6 +38,22 @@ const Shop = () => {
         <div className="container">
           {loading ? (
             <div className="loading">Chargement des produits...</div>
+          ) : error ? (
+            <div className="error-message" style={{ textAlign: 'center', padding: '40px' }}>
+              <p style={{ color: '#d4955f', marginBottom: '16px' }}>{error}</p>
+              <button 
+                onClick={loadProducts}
+                style={{
+                  padding: '10px 20px',
+                  background: '#8b5a2b',
+                  border: '2px solid #b87333',
+                  color: '#e8dcc8',
+                  cursor: 'pointer'
+                }}
+              >
+                🔄 Réessayer
+              </button>
+            </div>
           ) : (
             <div className="product-grid">
               {products.map((product) => (

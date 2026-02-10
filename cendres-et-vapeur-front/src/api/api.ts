@@ -1,4 +1,3 @@
-// En dev, on utilise le proxy Vite ('/api'), en prod on utilise l'URL complète
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 const getHeaders = (): HeadersInit => {
