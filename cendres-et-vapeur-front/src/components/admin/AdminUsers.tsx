@@ -79,6 +79,17 @@ export default function AdminUsersStatic() {
 
   const [form, setForm] = useState<UserCreate & { role?: string }>(emptyCreate);
 
+  const isCurrentAdmin = (() => {
+    try {
+      const u = localStorage.getItem('cev_user');
+      if (!u) return false;
+      const obj = JSON.parse(u);
+      return String(obj.role).toUpperCase() === 'ADMIN';
+    } catch {
+      return false;
+    }
+  })();
+
   // Charger les utilisateurs depuis l'API
   useEffect(() => {
     const fetchUsers = async () => {
@@ -159,9 +170,12 @@ export default function AdminUsersStatic() {
           password: form.password.trim(),
           avatar_url: form.avatar_url?.trim() || null,
           biography: form.biography?.trim() || null,
+          role: (form.role || 'user').toLowerCase(),
         });
 
         setUsers((prev) => [created, ...prev]);
+          // Notify other pages (journal, widgets) that data changed
+          try { window.dispatchEvent(new Event('dataChanged')); } catch (_) {}
       } else {
         if (!editingId) return;
 
@@ -171,6 +185,7 @@ export default function AdminUsersStatic() {
           email: form.email.trim(),
           avatar_url: form.avatar_url?.trim() || null,
           biography: form.biography?.trim() || null,
+          role: form.role?.trim() ? form.role.trim().toLowerCase() : undefined,
         };
 
         // si password rempli → update password
@@ -192,11 +207,14 @@ export default function AdminUsersStatic() {
               : u
           )
         );
+          // Notify other pages (journal, widgets) that data changed
+          try { window.dispatchEvent(new Event('dataChanged')); } catch (_) {}
       }
 
       setOpen(false);
     } catch (e: any) {
-      setError("Erreur lors de l’enregistrement.");
+      console.error('Create/update user failed', e);
+      setError(e?.message || "Erreur lors de l’enregistrement.");
     }
   }
 
@@ -207,6 +225,8 @@ export default function AdminUsersStatic() {
     try {
       await deleteUser(id);
       setUsers((prev) => prev.filter((u) => u.id !== id));
+        // Notify other pages (journal, widgets) that data changed
+        try { window.dispatchEvent(new Event('dataChanged')); } catch (_) {}
     } catch (err: any) {
       console.error('Erreur suppression user:', err);
       setError("Erreur lors de la suppression.");
@@ -237,9 +257,45 @@ export default function AdminUsersStatic() {
           style={{ padding: 10, borderRadius: 10, minWidth: 260, backgroundColor: "rgba(26,20,16,.8)", color: "#e8dcc8", border: "1px solid rgba(184, 115, 51, 0.3)" }}
         />
 
-        <button onClick={openCreate} style={{ padding: "10px 14px", borderRadius: 10, backgroundColor: "#8b5a2b", color: "#e8dcc8", border: "1px solid #b87333" }}>
-          + Nouvel utilisateur
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={openCreate} style={{ padding: "10px 14px", borderRadius: 10, backgroundColor: "#8b5a2b", color: "#e8dcc8", border: "1px solid #b87333" }}>
+            + Nouvel utilisateur
+          </button>
+          {isCurrentAdmin && (
+            <button
+              onClick={async () => {
+                setError(null);
+                try {
+                  const existing = await getUsers();
+                  const list = Array.isArray(existing) ? existing : [];
+                  const hasUser = list.some((u: any) => u.username === 'demo.user' || u.email === 'demo.user@example.com');
+                  const hasAdmin = list.some((u: any) => u.username === 'demo.admin' || u.email === 'demo.admin@example.com');
+
+                  if (!hasAdmin) {
+                    try {
+                      await createUser({ username: 'demo.admin', email: 'demo.admin@example.com', password: 'Password123!', role: 'admin' });
+                    } catch (err) { console.warn('create demo admin failed', err); }
+                  }
+
+                  if (!hasUser) {
+                    try {
+                      await createUser({ username: 'demo.user', email: 'demo.user@example.com', password: 'Password123!', role: 'user' });
+                    } catch (err) { console.warn('create demo user failed', err); }
+                  }
+
+                  const refreshed = await getUsers();
+                  if (Array.isArray(refreshed)) setUsers(refreshed);
+                } catch (err: any) {
+                  console.error('Recreate demo accounts failed', err);
+                  setError('Impossible de recréer les comptes de démonstration.');
+                }
+              }}
+              style={{ padding: '10px 14px', borderRadius: 10, background: '#264a2a', color: '#e8dcc8', border: '1px solid #3a7' }}
+            >
+              Recréer admin+user
+            </button>
+          )}
+        </div>
       </div>
 
       {error && (

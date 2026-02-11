@@ -21,9 +21,11 @@ import JournalPage from "./pages/admin/JournalPage";
 import Contact from "./pages/contact";
 import CalendarPage from "./pages/admin/CalendarPage";
 
+
 // Composants admin directs (avec API)
 import AdminProducts from "./components/admin/AdminProduct";
 import AdminUsers from "./components/admin/AdminUsers";
+
 
 
 
