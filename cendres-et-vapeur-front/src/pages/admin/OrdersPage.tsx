@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { getOrders, createOrder, updateOrder, deleteOrder } from "../../api/api";
 
 type Mode = "create" | "edit";
 
@@ -9,43 +10,14 @@ type OrderCreate = {
   user_id: number;
 };
 
-type OrderUpdate = OrderCreate;
-
 type OrderOut = {
   id: number;
   status: string;
-  total_amount: string; // comme ton API
+  total_amount: string;
   invoice_file?: string | null;
   user_id: number;
-  created_at?: string; // ISO
+  created_at?: string;
 };
-
-const seedOrders: OrderOut[] = [
-  {
-    id: 101,
-    status: "paid",
-    total_amount: "129.90",
-    invoice_file: null,
-    user_id: 3,
-    created_at: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
-  },
-  {
-    id: 102,
-    status: "pending",
-    total_amount: "59.90",
-    invoice_file: "https://example.com/invoice/102.pdf",
-    user_id: 4,
-    created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-  },
-  {
-    id: 103,
-    status: "shipped",
-    total_amount: "89.00",
-    invoice_file: null,
-    user_id: 2,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
-  },
-];
 
 const emptyOrder: OrderCreate = {
   status: "pending",
@@ -54,8 +26,9 @@ const emptyOrder: OrderCreate = {
   user_id: 1,
 };
 
-export default function OrdersPageStatic() {
-  const [orders, setOrders] = useState<OrderOut[]>(seedOrders);
+export default function OrdersPage() {
+  const [orders, setOrders] = useState<OrderOut[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [query, setQuery] = useState("");
@@ -63,6 +36,24 @@ export default function OrdersPageStatic() {
   const [mode, setMode] = useState<Mode>("create");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<OrderCreate>(emptyOrder);
+
+  const fetchOrders = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getOrders();
+      const list = Array.isArray(data) ? data : [];
+      setOrders(list);
+    } catch (err: any) {
+      setError(err.message || "Erreur lors du chargement des commandes");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -96,7 +87,7 @@ export default function OrdersPageStatic() {
     setOpen(true);
   }
 
-  function onSubmit() {
+  async function onSubmit() {
     try {
       setError(null);
 
@@ -124,21 +115,23 @@ export default function OrdersPageStatic() {
       }
 
       if (mode === "create") {
-        const nextId = (orders.at(-1)?.id ?? 0) + 1;
-        const created: OrderOut = {
-          id: nextId,
+        const created = await createOrder({
           status: payload.status,
-          total_amount: String(payload.total_amount),
-          invoice_file: payload.invoice_file ?? null,
+          total_amount: Number(payload.total_amount),
           user_id: payload.user_id,
           created_at: new Date().toISOString(),
         };
 
         setOrders((prev) => [...prev, created]);
+        });
+        setOrders((prev) => [created, ...prev]);
       } else {
         if (!editingId) return;
-
-        const updatePayload: OrderUpdate = payload;
+        const updated = await updateOrder(editingId, {
+          status: payload.status,
+          total_amount: Number(payload.total_amount),
+          user_id: payload.user_id,
+        });
         setOrders((prev) =>
           prev.map((o) =>
             o.id === editingId
@@ -151,20 +144,26 @@ export default function OrdersPageStatic() {
               }
               : o
           )
+          prev.map((o) => (o.id === editingId ? updated : o))
         );
       }
 
       setOpen(false);
     } catch (e: any) {
-      setError("Erreur lors de l'enregistrement.");
+      setError(e.message || "Erreur lors de l'enregistrement.");
     }
   }
 
-  function onDelete(id: number) {
+  async function onDelete(id: number) {
     const ok = confirm("Supprimer cette commande ?");
     if (!ok) return;
 
-    setOrders((prev) => prev.filter((o) => o.id !== id));
+    try {
+      await deleteOrder(id);
+      setOrders((prev) => prev.filter((o) => o.id !== id));
+    } catch (e: any) {
+      setError(e.message || "Erreur lors de la suppression.");
+    }
   }
 
   return (
@@ -178,6 +177,10 @@ export default function OrdersPageStatic() {
           flexWrap: "wrap",
         }}
       >
+    <section className="adminPage">
+      <h1 className="adminPageTitle">Commandes</h1>
+
+      <div style={{ display: "flex", gap: 10, justifyContent: "space-between", flexWrap: "wrap" }}>
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -188,12 +191,24 @@ export default function OrdersPageStatic() {
         <button onClick={openCreate} style={{ padding: "10px 14px", borderRadius: 10, backgroundColor: "#8b5a2b", color: "#e8dcc8", border: "1px solid #b87333" }}>
           + Nouvelle commande
         </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={openCreate} style={{ padding: "10px 14px", borderRadius: 10 }}>
+            + Nouvelle commande
+          </button>
+          <button onClick={fetchOrders} style={{ padding: "10px 14px", borderRadius: 10 }}>
+            Actualiser
+          </button>
+        </div>
       </div>
 
       {error && (
         <div style={{ padding: 10, borderRadius: 10, border: "1px solid rgba(255,0,0,.3)" }}>
           {String(error)}
         </div>
+      )}
+
+      {loading && (
+        <p style={{ textAlign: "center", padding: "2rem", opacity: 0.7 }}>Chargement des commandes…</p>
       )}
 
       <div style={{ overflowX: "auto" }}>
