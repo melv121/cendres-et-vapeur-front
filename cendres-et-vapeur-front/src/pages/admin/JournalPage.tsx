@@ -32,15 +32,15 @@ type ProductOut = {
 type OrderOut = {
   id: number;
   status: string;
-  total_amount: string; 
+  total_amount: string;
   invoice_file?: string | null;
   user_id: number;
-  created_at?: string; 
+  created_at?: string;
 };
 
 type ShiftNoteOut = {
   order_id: number;
-  date: string; 
+  date: string;
   content: string;
   shift_type: string;
 };
@@ -128,16 +128,19 @@ export default function JournalPageStatic() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // fetch function used on mount and on 'dataChanged' events
   const fetchApiLogs = async () => {
     setLoading(true);
     setError(null);
     try {
       const data = await getLogs();
-      if (Array.isArray(data)) setApiLogs(data);
-      else setError('Réponse API inattendue pour les logs');
+      const logsArray = Array.isArray(data) ? data : data?.logs || [];
+
+      if (Array.isArray(logsArray) && logsArray.length > 0) {
+        setApiLogs(logsArray);
+      } else {
+        setApiLogs([]);
+      }
     } catch (err: any) {
-      console.error('getLogs failed:', err);
       setError(err?.message || 'Erreur lors du chargement des logs');
     } finally {
       setLoading(false);
@@ -154,7 +157,6 @@ export default function JournalPageStatic() {
   const logs = useMemo<LogItem[]>(() => {
     const items: LogItem[] = [];
 
-    // If API returned logs, prefer them
     if (apiLogs && apiLogs.length > 0) {
       apiLogs.slice(0, 80).forEach((raw: any) => {
         const time = raw.created_at || raw.time || raw.timestamp || raw.date || raw.ts || "";
@@ -173,9 +175,6 @@ export default function JournalPageStatic() {
       });
       return items.slice(0, 30);
     }
-
-
-    // Orders
     [...orders]
       .sort((a, b) => Date.parse(b.created_at || "") - Date.parse(a.created_at || ""))
       .slice(0, 8)
@@ -188,7 +187,6 @@ export default function JournalPageStatic() {
         });
       });
 
-    // Products
     [...products]
       .sort((a, b) => b.id - a.id)
       .slice(0, 5)
@@ -201,7 +199,6 @@ export default function JournalPageStatic() {
         });
       });
 
-    // Users
     [...users]
       .sort((a, b) => b.id - a.id)
       .slice(0, 5)
@@ -214,7 +211,6 @@ export default function JournalPageStatic() {
         });
       });
 
-    // Shift notes
     [...shiftNotes]
       .sort((a, b) => String(b.date).localeCompare(String(a.date)))
       .slice(0, 8)
@@ -231,7 +227,8 @@ export default function JournalPageStatic() {
     const weight = (t: LogItem["type"]) =>
       t === "ORDER" ? 0 : t === "SHIFT" ? 1 : t === "PRODUCT" ? 2 : 3;
 
-    return items.sort((a, b) => weight(a.type) - weight(b.type)).slice(0, 30);
+    const result = items.sort((a, b) => weight(a.type) - weight(b.type)).slice(0, 30);
+    return result;
   }, [orders, products, users, shiftNotes, apiLogs]);
 
   return (
@@ -240,7 +237,7 @@ export default function JournalPageStatic() {
       <p className="adminPageSubtitle">{apiLogs ? 'Journal (données depuis l’API)' : 'Version statique (sans API) — pour tester l’UI.'}</p>
 
       <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-        <button onClick={() => { setApiLogs(null); setError(null); setLoading(true); getLogs().then(d => setApiLogs(Array.isArray(d) ? d : [] as any[])).catch(e => setError(String(e))).finally(()=>setLoading(false)); }} style={{ padding: '6px 10px', borderRadius: 8 }}>Actualiser</button>
+        <button onClick={() => { setApiLogs(null); setError(null); setLoading(true); getLogs().then(d => setApiLogs(Array.isArray(d) ? d : [] as any[])).catch(e => setError(String(e))).finally(() => setLoading(false)); }} style={{ padding: '6px 10px', borderRadius: 8 }}>Actualiser</button>
         {loading && <div style={{ opacity: 0.8 }}>Chargement...</div>}
         {error && <div style={{ color: '#ff8080' }}>{error}</div>}
       </div>

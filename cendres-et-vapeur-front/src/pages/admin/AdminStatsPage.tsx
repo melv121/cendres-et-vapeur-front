@@ -64,6 +64,7 @@ export default function AdminStatsPage() {
         const data: any = await getDashboardStats();
         if (!mounted) return;
 
+
         // Map common possible fields from backend
         if (typeof data.total_users === 'number') setTotalUsers(data.total_users);
         if (typeof data.total_orders === 'number') setTotalOrders(data.total_orders);
@@ -71,6 +72,7 @@ export default function AdminStatsPage() {
 
         if (Array.isArray(data.top_products)) {
           setTop5Products(data.top_products.slice(0, 5));
+        } else {
         }
 
         if (Array.isArray(data.orders_last_7_days)) {
@@ -98,7 +100,6 @@ export default function AdminStatsPage() {
           if (typeof s.total_revenue === 'number') setTotalRevenue(s.total_revenue);
         }
       } catch (err: any) {
-        console.error('getDashboardStats failed:', err);
         setError(err?.message || 'Erreur récupération stats');
       } finally {
         if (mounted) setLoading(false);

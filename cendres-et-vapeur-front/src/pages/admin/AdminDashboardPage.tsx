@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { getLogs, getUsers, getProducts, getOrders, getShiftNotes } from "../../api/api";
 import "../admin/pagestyle/adminDashboard.css";
 
 type UserOut = {
@@ -26,122 +27,66 @@ type ProductOut = {
 type OrderOut = {
   id: number;
   status: string;
-  total_amount: string; 
+  total_amount: string;
   invoice_file?: string | null;
   user_id: number;
-  created_at?: string; 
+  created_at?: string;
 };
 
 type ShiftNoteOut = {
   order_id: number;
-  date: string; // YYYY-MM-DD
+  date: string;
   content: string;
   shift_type: string;
 };
 
-const usersSeed: UserOut[] = [
-  { id: 1, username: "admin.valdrak", email: "admin@valdrak.io", role: "admin" },
-  { id: 2, username: "editor.steam", email: "editor@valdrak.io", role: "editor" },
-  { id: 3, username: "user.cendres", email: "user@valdrak.io", role: "user" },
-  { id: 4, username: "mina", email: "mina@valdrak.io", role: "user" },
-];
+type Log = {
+  id?: number;
+  message?: string;
+  action?: string;
+  type?: string;
+  user?: string;
+  username?: string;
+  created_at?: string;
+};
 
-const productsSeed: ProductOut[] = [
-  {
-    id: 11,
-    name: "Épée de Valdrak",
-    description: "Lame forgée au cuivre noir.",
-    image_url: null,
-    category_id: 1,
-    stock: 2,
-    base_price: 49.9,
-    current_price: 59.9,
-    popularity_score: 8.2,
-  },
-  {
-    id: 12,
-    name: "Bouclier de Cendres",
-    description: "Finition steampunk, très résistant.",
-    image_url: null,
-    category_id: 2,
-    stock: 6,
-    base_price: 79,
-    current_price: 89,
-    popularity_score: 7.4,
-  },
-  {
-    id: 13,
-    name: "Potion de Brume",
-    description: "Récupération rapide (usage contrôlé).",
-    image_url: null,
-    category_id: 3,
-    stock: 3,
-    base_price: 9.5,
-    current_price: 11,
-    popularity_score: 9.1,
-  },
-  {
-    id: 14,
-    name: "Gants d’Acier",
-    description: "Protection renforcée.",
-    image_url: null,
-    category_id: 2,
-    stock: 12,
-    base_price: 19.9,
-    current_price: 22.9,
-    popularity_score: 6.1,
-  },
-];
-
-const ordersSeed: OrderOut[] = [
-  {
-    id: 101,
-    status: "paid",
-    total_amount: "129.90",
-    invoice_file: null,
-    user_id: 3,
-    created_at: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
-  },
-  {
-    id: 102,
-    status: "pending",
-    total_amount: "59.90",
-    invoice_file: "https://example.com/invoice/102.pdf",
-    user_id: 4,
-    created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-  },
-  {
-    id: 103,
-    status: "shipped",
-    total_amount: "89.00",
-    invoice_file: null,
-    user_id: 2,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
-  },
-  {
-    id: 104,
-    status: "cancelled",
-    total_amount: "11.00",
-    invoice_file: null,
-    user_id: 3,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-  },
-];
-
-const shiftNotesSeed: ShiftNoteOut[] = [
-  { order_id: 101, date: "2026-03-01", shift_type: "jour", content: "Contrôle stock + préparation expédition." },
-  { order_id: 102, date: "2026-03-02", shift_type: "nuit", content: "Alerte: rupture bientôt sur Bouclier." },
-  { order_id: 103, date: "2026-03-03", shift_type: "urgent", content: "Incident livraison → contacter transporteur." },
-];
-
-export default function AdminDashboardPageStatic() {
+export default function AdminDashboardPage() {
   const navigate = useNavigate();
 
-  
-  const [users] = useState<UserOut[]>(usersSeed);
-  const [products] = useState<ProductOut[]>(productsSeed);
-  const [orders] = useState<OrderOut[]>(ordersSeed);
-  const [shiftNotes] = useState<ShiftNoteOut[]>(shiftNotesSeed);
+  const [users, setUsers] = useState<UserOut[]>([]);
+  const [products, setProducts] = useState<ProductOut[]>([]);
+  const [orders, setOrders] = useState<OrderOut[]>([]);
+  const [shiftNotes, setShiftNotes] = useState<ShiftNoteOut[]>([]);
+  const [logs, setLogs] = useState<Log[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [usersData, productsData, ordersData, logsData, shiftsData] = await Promise.all([
+          getUsers().catch(() => []),
+          getProducts().catch(() => []),
+          getOrders().catch(() => []),
+          getLogs().catch(() => []),
+          getShiftNotes().catch(() => []),
+        ]);
+
+        setUsers(Array.isArray(usersData) ? usersData : []);
+        setProducts(Array.isArray(productsData) ? productsData : []);
+        setOrders(Array.isArray(ordersData) ? ordersData : []);
+        setShiftNotes(Array.isArray(shiftsData) ? shiftsData : []);
+
+        const logsArray = Array.isArray(logsData) ? logsData : [];
+        setLogs(logsArray);
+      } catch (err) {
+        console.error("Erreur lors du chargement des données:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const recentOrders = useMemo(() => {
     const sorted = [...orders].sort((a, b) => {
@@ -164,7 +109,7 @@ export default function AdminDashboardPageStatic() {
       <div className="adminDashTop">
         <div>
           <h1 className="adminDashTitle">Tableau de bord</h1>
-          <p className="adminDashSub">Version statique (sans API) — vue d’ensemble.</p>
+          <p className="adminDashSub">Vue d'ensemble de l'activité.</p>
         </div>
 
         <div className="adminDashActions">
@@ -200,9 +145,8 @@ export default function AdminDashboardPageStatic() {
         </div>
       </div>
 
-     
       <div className="adminGrid">
-       
+        {/* Commandes récentes */}
         <section className="adminPanel">
           <div className="adminPanelHead">
             <h2>Commandes récentes</h2>
@@ -211,7 +155,9 @@ export default function AdminDashboardPageStatic() {
             </button>
           </div>
 
-          {recentOrders.length === 0 ? (
+          {loading ? (
+            <p className="adminMuted">Chargement...</p>
+          ) : recentOrders.length === 0 ? (
             <p className="adminMuted">Aucune commande.</p>
           ) : (
             <div className="adminTableWrap">
@@ -241,7 +187,7 @@ export default function AdminDashboardPageStatic() {
           )}
         </section>
 
-        {/* Stock Alerts */}
+        {/* Alertes stock */}
         <section className="adminPanel">
           <div className="adminPanelHead">
             <h2>Alertes stock</h2>
@@ -250,7 +196,9 @@ export default function AdminDashboardPageStatic() {
             </button>
           </div>
 
-          {lowStock.length === 0 ? (
+          {loading ? (
+            <p className="adminMuted">Chargement...</p>
+          ) : lowStock.length === 0 ? (
             <p className="adminMuted">Aucune alerte, stock OK ✅</p>
           ) : (
             <ul className="adminList">
@@ -267,43 +215,34 @@ export default function AdminDashboardPageStatic() {
           )}
         </section>
 
+        {/* Journal d'activité */}
         <section className="adminPanel adminPanelWide">
           <div className="adminPanelHead">
-            <h2>Journal d’activité</h2>
+            <h2>Journal d'activité</h2>
             <button className="adminLinkBtn" onClick={() => navigate("/admin/journal")}>
               Ouvrir
             </button>
           </div>
 
-          <ul className="adminList">
-            <li className="adminListItem">
-              <div className="adminListMain">
-                <div className="adminListTitle">Connexion admin</div>
-                <div className="adminListSub">Il y a quelques instants</div>
-              </div>
-              <div className="adminPill">AUTH</div>
-            </li>
-
-            <li className="adminListItem">
-              <div className="adminListMain">
-                <div className="adminListTitle">Ajout note de quart</div>
-                <div className="adminListSub">Aujourd’hui</div>
-              </div>
-              <div className="adminPill">SHIFT</div>
-            </li>
-
-            <li className="adminListItem">
-              <div className="adminListMain">
-                <div className="adminListTitle">Vérification stock critique</div>
-                <div className="adminListSub">Aujourd’hui</div>
-              </div>
-              <div className="adminPill">SYSTEM</div>
-            </li>
-          </ul>
-
-          <p className="adminMuted" style={{ marginTop: 8 }}>
-            (Version statique : logs fictifs)
-          </p>
+          {loading ? (
+            <div className="adminMuted">Chargement...</div>
+          ) : logs.length === 0 ? (
+            <div className="adminMuted">Aucune activité</div>
+          ) : (
+            <ul className="adminList">
+              {logs.slice(0, 5).map((log: Log, i: number) => (
+                <li key={log.id || i} className="adminListItem">
+                  <div className="adminListMain">
+                    <div className="adminListTitle">{log.message || log.action || "Activité"}</div>
+                    <div className="adminListSub">
+                      {log.created_at ? new Date(log.created_at).toLocaleString("fr-FR") : "Récemment"}
+                    </div>
+                  </div>
+                  <div className="adminPill">{log.user || log.username || log.type || "EVENT"}</div>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       </div>
     </div>
@@ -314,5 +253,5 @@ function formatDate(dateTime?: string) {
   if (!dateTime) return "-";
   const d = new Date(dateTime);
   if (isNaN(d.getTime())) return dateTime;
-  return d.toLocaleString();
+  return d.toLocaleString("fr-FR");
 }

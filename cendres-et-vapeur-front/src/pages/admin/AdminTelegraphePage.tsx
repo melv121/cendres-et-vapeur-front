@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import "../admin/pagestyle/adminTelegraphe.css";
+import "./pagestyle/adminTelegraphe.css";
 
 type Role = "ADMIN" | "EDITOR";
 type Sender = "me" | "other" | "system";
@@ -148,12 +148,12 @@ export default function AdminTelegraphePage() {
                   <div className="memberName">{u.name}</div>
                   <div className="memberRole">{u.role === "ADMIN" ? "Administrateur" : "Éditeur"}</div>
                 </div>
-                <span className="memberChip">{u.role}</span>
+                <span className={`memberChip ${u.role === "ADMIN" ? "admin" : "editor"}`}>{u.role}</span>
               </div>
             ))}
           </div>
 
-          
+
         </aside>
 
         <main className="teleMain">

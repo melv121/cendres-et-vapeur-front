@@ -9,7 +9,7 @@ function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  
+
   // État pour le 2FA
   const [show2FAModal, setShow2FAModal] = useState(false)
   const [userId, setUserId] = useState('')
@@ -23,7 +23,7 @@ function Login() {
 
     try {
       const response = await login(email, password)
-      
+
       if (response.error || response.detail) {
         setError(response.error || response.detail || 'Erreur de connexion')
         return
@@ -47,15 +47,15 @@ function Login() {
   const handleVerify2FA = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!userId) return
-    
+
     setError('')
     setVerifying2FA(true)
 
     try {
       const response = await verify2FA(Number(userId), code2FA)
-      
+
       console.log('Réponse 2FA:', response)
-      
+
       if (response.detail) {
         setError(response.detail)
         return
@@ -69,16 +69,19 @@ function Login() {
       // 2FA validé, on a le token (l'API retourne "token" pas "access_token")
       const token = response.token || response.access_token
       if (token) {
+        console.log('[2FA] Token reçu:', token.substring(0, 20) + '...');
         localStorage.setItem('cev_auth_token', token)
-        
+        console.log('[2FA] Token stocké dans localStorage');
+        console.log('[2FA] Vérification:', localStorage.getItem('cev_auth_token') ? 'OK ✓' : 'ERREUR ✗');
+
         // Stocker les infos utilisateur
         if (response.user) {
           localStorage.setItem('cev_user', JSON.stringify(response.user))
         }
-        
+
         // Notifier la Navbar que l'utilisateur est connecté
         window.dispatchEvent(new Event('userLoggedIn'))
-        
+
         setShow2FAModal(false)
         navigate('/shop')
       } else if (response.success) {
@@ -156,7 +159,7 @@ function Login() {
               <h2>Vérification 2FA</h2>
               <button className="modal-close" onClick={close2FAModal}>✕</button>
             </div>
-            
+
             <p className="modal-description">
               Un code de vérification a été envoyé à votre adresse email.<br />
               Veuillez le saisir ci-dessous.
