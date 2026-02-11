@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { getUserCart, getProductById, updateCartItemQuantity, removeFromCart, emptyCart } from '../api/api';
+import { getUserCart, getProductById, updateCartItemQuantity, removeFromCart, emptyCart, updateOrder } from '../api/api';
 import '../styles/Cart.css';
 
 interface CartItem {
@@ -21,6 +21,10 @@ const Cart = () => {
   const [orderId, setOrderId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [showPayment, setShowPayment] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
 
   const getUserId = (): number | null => {
     const userStr = localStorage.getItem('cev_user');
@@ -150,12 +154,46 @@ const Cart = () => {
   };
 
   const handleCheckout = () => {
-    if (cartItems.length === 0) {
-      alert('Votre panier est vide');
-      return;
-    }
-    alert('Redirection vers le paiement...');
+    if (cartItems.length === 0) return;
+    setShowPayment(true);
   };
+
+  const handleConfirmPayment = async () => {
+    if (!orderId || !userId) return;
+    setPaying(true);
+    setError(null);
+    try {
+      await updateOrder(orderId, {
+        status: 'paid',
+        total_amount: calculateTotal(),
+        user_id: userId,
+      });
+      setPaymentSuccess(true);
+      setCartItems([]);
+      setShowPayment(false);
+      window.dispatchEvent(new Event('cartUpdated'));
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors du paiement');
+    } finally {
+      setPaying(false);
+    }
+  };
+
+  if (paymentSuccess) {
+    return (
+      <div className="cart-page">
+        <div className="container">
+          <div className="empty-cart">
+            <h2>Paiement réussi</h2>
+            <p>Votre commande a été confirmée. Une facture a été générée.</p>
+            <button onClick={() => navigate('/shop')} className="btn-primary">
+              Continuer mes achats
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!userId) {
     return (
@@ -327,19 +365,47 @@ const Cart = () => {
                 <span className="total-amount">{calculateTotal().toFixed(2)} €</span>
               </div>
 
-              <button onClick={handleCheckout} className="btn-checkout">
-                Procéder au paiement
-              </button>
+              {!showPayment ? (
+                <>
+                  <button onClick={handleCheckout} className="btn-checkout">
+                    Procéder au paiement
+                  </button>
 
-              <div className="payment-methods">
-                <p className="payment-title">Paiements acceptés</p>
-                <div className="payment-icons">
+                  <div className="security-badge">
+                    <span>Paiement 100% sécurisé</span>
+                  </div>
+                </>
+              ) : (
+                <div className="payment-form">
+                  <div className="summary-divider"></div>
+
+                  <p style={{ opacity: 0.8 }}>
+                    Confirmez-vous le paiement de {calculateTotal().toFixed(2)} € ?
+                  </p>
+
+                  {error && (
+                    <p style={{ color: '#d4955f', marginTop: 8 }}>{error}</p>
+                  )}
+
+                  <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                    <button
+                      onClick={() => { setShowPayment(false); setError(null); }}
+                      className="btn-primary"
+                      style={{ flex: 1, padding: 12 }}
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      onClick={handleConfirmPayment}
+                      className="btn-checkout"
+                      disabled={paying}
+                      style={{ flex: 1 }}
+                    >
+                      {paying ? 'Paiement en cours…' : 'Confirmer le paiement'}
+                    </button>
+                  </div>
                 </div>
-              </div>
-
-              <div className="security-badge">
-                <span>Paiement 100% sécurisé</span>
-              </div>
+              )}
             </div>
           </div>
         </div>
