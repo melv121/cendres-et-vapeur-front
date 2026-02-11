@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type { Product } from '../types/Product';
 import { productService } from '../services/productService';
-
+import { addToCart } from '../api/api';
 
 const Home: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [addingId, setAddingId] = useState<number | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadProducts();
@@ -21,6 +23,26 @@ const Home: React.FC = () => {
       console.error('Erreur lors du chargement des produits:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddToCart = async (productId: number) => {
+    const userStr = localStorage.getItem('cev_user');
+    const token = localStorage.getItem('cev_auth_token');
+    if (!userStr || !token) {
+      navigate('/login');
+      return;
+    }
+    try {
+      const user = JSON.parse(userStr);
+      setAddingId(productId);
+      await addToCart(user.id, productId, 1);
+      window.dispatchEvent(new Event('cartUpdated'));
+      alert('Produit ajouté au panier');
+    } catch (err: any) {
+      alert(err.message || 'Erreur lors de l\'ajout au panier');
+    } finally {
+      setAddingId(null);
     }
   };
 
@@ -85,7 +107,13 @@ const Home: React.FC = () => {
                     <p className="product-description">{product.description}</p>
                     <div className="product-footer">
                       <span className="product-price">{product.current_price} Cu</span>
-                      <button className="add-to-cart">Ajouter</button>
+                      <button
+                        className="add-to-cart"
+                        onClick={() => handleAddToCart(product.id)}
+                        disabled={addingId === product.id}
+                      >
+                        {addingId === product.id ? '...' : 'Ajouter'}
+                      </button>
                     </div>
                   </div>
                 </div>
