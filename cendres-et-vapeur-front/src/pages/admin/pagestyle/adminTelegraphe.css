@@ -1,0 +1,296 @@
+.telePage {
+  padding: 1.2rem;
+}
+
+.teleGrid {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 1rem;
+  min-height: calc(100vh - 160px);
+}
+
+/* Sidebar */
+.teleSide {
+  border-radius: 18px;
+  padding: 1rem;
+  background: linear-gradient(180deg, rgba(15,12,10,0.92), rgba(26,20,16,0.92));
+  border: 1px solid rgba(255,255,255,0.07);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  display: flex;
+  flex-direction: column;
+}
+
+.teleSideTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.teleSideTitle h1 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: rgba(212, 165, 116, 0.95);
+}
+
+.teleSideTitle p {
+  margin: 0.25rem 0 0;
+  opacity: 0.7;
+  font-size: 0.9rem;
+}
+
+.teleToggle {
+  border: 1px solid rgba(205,127,50,0.35);
+  background: rgba(205,127,50,0.12);
+  color: rgba(212, 165, 116, 0.95);
+  border-radius: 12px;
+  padding: 0.6rem 0.8rem;
+  cursor: pointer;
+  font-weight: 800;
+}
+.teleToggle:hover { filter: brightness(1.08); }
+
+.teleBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+
+.badge {
+  font-size: 0.85rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  opacity: 0.95;
+}
+.badge.ok { border-color: rgba(120,255,180,0.25); background: rgba(120,255,180,0.08); }
+.badge.off { border-color: rgba(255,120,120,0.25); background: rgba(255,120,120,0.07); }
+.badge.neutral { opacity: 0.75; }
+
+.teleSearch {
+  margin-top: 0.9rem;
+}
+.teleSearch input {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.22);
+  padding: 0.75rem 0.85rem;
+  outline: none;
+}
+
+.teleMembers {
+  margin-top: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  overflow: auto;
+  padding-right: 4px;
+  flex: 1;
+}
+
+.memberRow {
+  display: grid;
+  grid-template-columns: 14px 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.75rem 0.75rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(0,0,0,0.18);
+}
+.memberRow:hover { background: rgba(0,0,0,0.26); }
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+}
+.dot.gold { background: rgba(205,127,50,0.95); }
+.dot.pink { background: rgba(236,127,169,0.95); }
+
+.memberInfo { display: flex; flex-direction: column; }
+.memberName { font-weight: 900; }
+.memberRole { opacity: 0.65; font-size: 0.85rem; margin-top: 0.1rem; }
+
+.memberChip {
+  font-size: 0.78rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.08);
+  opacity: 0.85;
+}
+
+.teleHint {
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  opacity: 0.7;
+  font-size: 0.9rem;
+}
+
+/* Main chat */
+.teleMain {
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.07);
+  background: radial-gradient(1200px 500px at 10% 0%, rgba(205,127,50,0.10), transparent 60%),
+              linear-gradient(180deg, rgba(8,6,6,0.9), rgba(16,12,10,0.92));
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.teleHeader {
+  padding: 1rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.roomTitle {
+  font-weight: 900;
+  color: rgba(212, 165, 116, 0.95);
+}
+.roomSub {
+  margin-top: 0.15rem;
+  opacity: 0.65;
+  font-size: 0.9rem;
+}
+
+.teleHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.pulse {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 0 rgba(120,255,180,0.0);
+}
+.pulse.on { background: rgba(120,255,180,0.95); box-shadow: 0 0 16px rgba(120,255,180,0.35); }
+.pulse.off { background: rgba(255,120,120,0.95); box-shadow: 0 0 16px rgba(255,120,120,0.25); }
+
+.smallText { opacity: 0.75; font-weight: 800; }
+
+.teleMessages {
+  padding: 1rem;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.msg.system {
+  display: flex;
+  justify-content: center;
+}
+
+.sysBubble {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  opacity: 0.9;
+  font-size: 0.9rem;
+}
+
+.bubbleWrap { max-width: 78%; }
+
+.msg.me { display: flex; justify-content: flex-end; }
+.msg.me .bubbleWrap { max-width: 78%; }
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.35rem;
+  opacity: 0.85;
+}
+.author { font-weight: 900; }
+.time { opacity: 0.6; font-size: 0.85rem; }
+
+.role {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.10);
+}
+.role.admin { background: rgba(205,127,50,0.12); border-color: rgba(205,127,50,0.25); }
+.role.editor { background: rgba(236,127,169,0.10); border-color: rgba(236,127,169,0.22); }
+
+.bubble {
+  padding: 0.85rem 0.95rem;
+  border-radius: 16px;
+  background: rgba(0,0,0,0.22);
+  border: 1px solid rgba(255,255,255,0.07);
+  line-height: 1.35;
+}
+
+.msg.me .bubble {
+  background: rgba(205,127,50,0.12);
+  border-color: rgba(205,127,50,0.22);
+}
+
+/* Composer */
+.teleComposer {
+  padding: 0.9rem;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  background: rgba(0,0,0,0.18);
+}
+
+.composerBox {
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.22);
+  padding: 0.75rem;
+}
+
+.composerBox textarea {
+  width: 100%;
+  min-height: 70px;
+  resize: none;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 0.2rem 0.15rem;
+  line-height: 1.35;
+}
+
+.composerActions {
+  margin-top: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.composerNote {
+  opacity: 0.65;
+  font-size: 0.9rem;
+}
+
+.sendBtn {
+  border: 1px solid rgba(205,127,50,0.35);
+  background: linear-gradient(180deg, rgba(205,127,50,0.35), rgba(205,127,50,0.12));
+  color: rgba(212, 165, 116, 0.95);
+  border-radius: 12px;
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+  font-weight: 900;
+}
+.sendBtn:hover { filter: brightness(1.08); }
+
+@media (max-width: 980px) {
+  .teleGrid { grid-template-columns: 1fr; }
+}

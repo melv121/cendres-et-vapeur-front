@@ -1,0 +1,131 @@
+.adminStatsPage {
+  padding: 1.5rem;
+}
+
+.statsTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.statsTitle {
+  font-size: 1.6rem;
+  font-weight: 900;
+  margin: 0;
+}
+
+.statsSubtitle {
+  margin: 0;
+  opacity: 0.7;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 1rem;
+}
+
+.statsCard {
+  grid-column: span 4;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1rem;
+  min-height: 110px;
+}
+
+.statsCardWide {
+  grid-column: span 12;
+}
+
+.statsLabel {
+  margin: 0;
+  opacity: 0.75;
+  font-size: 0.95rem;
+}
+
+.statsValue {
+  margin: 0.35rem 0 0;
+  font-size: 2rem;
+  font-weight: 900;
+}
+
+.statsHint {
+  margin: 0.25rem 0 0;
+  opacity: 0.6;
+  font-size: 0.9rem;
+}
+
+.chartWrap {
+  margin-top: 0.75rem;
+  height: 180px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  align-items: end;
+}
+
+.barCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  height: 100%;
+}
+
+.bar {
+  width: 100%;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(205,127,50,0.95), rgba(180,115,51,0.45));
+  border: 1px solid rgba(205,127,50,0.35);
+  min-height: 8px;
+}
+
+.barLabel {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+.topTable {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.topRow {
+  display: grid;
+  grid-template-columns: 1fr 120px 140px;
+  gap: 1rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.topHead {
+  background: rgba(0, 0, 0, 0.28);
+  font-weight: 900;
+  opacity: 0.9;
+}
+
+.topName {
+  font-weight: 700;
+}
+
+.topStock.low {
+  color: #ffb4b4;
+  font-weight: 900;
+}
+
+.topPrice {
+  text-align: right;
+  font-weight: 900;
+}
+
+@media (max-width: 1000px) {
+  .statsCard { grid-column: span 12; }
+  .topRow { grid-template-columns: 1fr 90px 110px; }
+}

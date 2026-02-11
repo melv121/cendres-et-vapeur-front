@@ -1,5 +1,5 @@
 import { useState } from "react";
-import AdminHeader from "../components/admin/AdminHeader";
+import AdminHeader from "../layout/admin/AdminHeader";
 import AdminProducts from "../components/admin/AdminProduct";
 import AdminUsers from "../components/admin/AdminUsers";
 import TelegraphChat from "../components/admin/TelegraphChat";

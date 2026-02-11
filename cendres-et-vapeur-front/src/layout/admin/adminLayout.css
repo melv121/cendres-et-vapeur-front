@@ -1,4 +1,4 @@
-.adminHeader{
+.adminHeader {
   position: fixed;
   top: 0;
   left: 0;
@@ -14,42 +14,43 @@
   background: rgba(26, 20, 16, 0.92);
   backdrop-filter: blur(12px);
 
-  border-bottom: 1px solid rgba(255,255,255,.12);
+  border-bottom: 1px solid rgba(255, 255, 255, .12);
   z-index: 1000;
 }
 
 /* LEFT */
-.adminHeaderLeft{
+.adminHeaderLeft {
   display: flex;
   align-items: center;
   gap: 14px;
 }
 
-.adminLogo{
+.adminLogo {
   height: 40px;
-  filter: drop-shadow(0 0 10px rgba(0,0,0,.6));
+  filter: drop-shadow(0 0 10px rgba(0, 0, 0, .6));
 }
 
-.adminTitle{
+.adminTitle {
   font-size: 18px;
   font-weight: 800;
   letter-spacing: .5px;
+  color: #d4955f;
 }
 
 /* NAV */
-.adminNav{
+.adminNav {
   display: flex;
   align-items: center;
   gap: 18px;
 }
 
-.adminNavLinks{
+.adminNavLinks {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
 }
 
-.adminNavLinks a{
+.adminNavLinks a {
   text-decoration: none;
   padding: 8px 14px;
   border-radius: 999px;
@@ -58,78 +59,119 @@
   border: 1px solid transparent;
   transition: all .2s ease;
   white-space: nowrap;
+  color: #e8dcc8;
 }
 
-.adminNavLinks a:hover{
-  background: rgba(255,255,255,.08);
+.adminNavLinks a:hover {
+  background: rgba(255, 255, 255, .08);
+  color: #d4955f;
 }
 
-.adminNavLinks a.active{
-  background: rgba(255,255,255,.12);
-  border-color: rgba(255,255,255,.2);
+.adminNavLinks a.active {
+  background: rgba(255, 255, 255, .12);
+  border-color: rgba(255, 255, 255, .2);
+  color: #d4955f;
 }
 
 /* ACTIONS */
-.adminNavActions{
+.adminNavActions {
   display: flex;
   align-items: center;
 }
 
-.adminLogoutBtn{
+.adminLogoutBtn {
   padding: 8px 16px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.3);
+  border: 1px solid rgba(255, 255, 255, .3);
   background: transparent;
-  color: inherit;
+  color: #e8dcc8;
   cursor: pointer;
   font-weight: 700;
   transition: all .2s ease;
 }
 
-.adminLogoutBtn:hover{
-  background: rgba(255,80,80,.15);
-  border-color: rgba(255,80,80,.5);
+.adminLogoutBtn:hover {
+  background: rgba(255, 80, 80, .15);
+  border-color: rgba(255, 80, 80, .5);
 }
 
-.adminLogoutBtn:active{
+.adminLogoutBtn:active {
   transform: scale(.96);
 }
 
 /*AdminFooter */
-.adminFooter{
+.adminFooter {
   padding: 12px 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  border-top: 1px solid rgba(255,255,255,.12);
+  border-top: 1px solid rgba(255, 255, 255, .12);
+  color: #e8dcc8;
 }
 
-.adminFooterRight{
+.adminFooterRight {
   opacity: .8;
   font-size: 13px;
 }
-.adminLogoutBtn{
+
+.adminLogoutBtn {
   padding: 8px 14px;
   border-radius: 10px;
-  border: 1px solid rgba(255,255,255,.25);
+  border: 1px solid rgba(255, 255, 255, .25);
   background: transparent;
-  color: inherit;
+  color: #e8dcc8;
   cursor: pointer;
   font-weight: 600;
   transition: all .2s ease;
 }
 
-.adminLogoutBtn:hover{
-  background: rgba(255,255,255,.12);
+.adminLogoutBtn:hover {
+  background: rgba(255, 255, 255, .12);
 }
 
-.adminLogoutBtn:active{
+.adminLogoutBtn:active {
   transform: scale(.97);
 }
 
-.adminLogo{
+.adminLogo {
   height: 36px;
   width: auto;
   object-fit: contain;
+}
+
+
+/* === TELEGRAPHE LINK === */
+.adminNavLinks a.telegraphe-link {
+  position: relative;
+  /* 🔑 clé du fix */
+  padding-right: 22px;
+  /* espace pour le badge */
+}
+
+/* Badge message */
+.msj-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+
+  background: #b87333;
+  color: #1a1410;
+
+  font-size: 0.7rem;
+  font-weight: 900;
+
+  padding: 2px 6px;
+  min-width: 18px;
+  height: 18px;
+
+  border-radius: 999px;
+  text-align: center;
+  line-height: 1;
+
+  box-shadow: 0 4px 10px rgba(0, 0, 0, .4);
+  border: 1px solid rgba(255, 255, 255, .35);
+
+  pointer-events: none;
+  /* ne bloque pas le clic */
 }

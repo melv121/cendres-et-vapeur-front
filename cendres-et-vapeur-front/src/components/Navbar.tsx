@@ -84,7 +84,7 @@ const Navbar: React.FC = () => {
             <Link to="/shop" className="navbar-link">Boutique</Link>
           </li>
           <li className="navbar-item">
-            <Link to="/about" className="navbar-link">À propos</Link>
+            <Link to="/infos" className="navbar-link">À propos</Link>
           </li>
           <li className="navbar-item">
             <Link to="/contact" className="navbar-link">Contact</Link>
@@ -104,7 +104,9 @@ const Navbar: React.FC = () => {
               )}
               <li className="navbar-item navbar-user">
                 <span className="navbar-username">{user.username}</span>
-                <span className="navbar-role">{user.role}</span>
+                {user.role !== 'ADMIN' && (
+                  <span className="navbar-role">{user.role}</span>
+                )}
                 <button onClick={handleLogout} className="navbar-logout">Déconnexion</button>
               </li>
             </>

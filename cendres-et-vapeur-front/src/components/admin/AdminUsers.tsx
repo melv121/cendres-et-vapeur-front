@@ -182,13 +182,13 @@ export default function AdminUsersStatic() {
           prev.map((u) =>
             u.id === editingId
               ? {
-                  ...u,
-                  username: payload.username,
-                  email: payload.email,
-                  role: payload.role ?? u.role,
-                  avatar_url: payload.avatar_url ?? null,
-                  biography: payload.biography ?? null,
-                }
+                ...u,
+                username: payload.username,
+                email: payload.email,
+                role: payload.role ?? u.role,
+                avatar_url: payload.avatar_url ?? null,
+                biography: payload.biography ?? null,
+              }
               : u
           )
         );
@@ -220,7 +220,7 @@ export default function AdminUsersStatic() {
           Chargement des utilisateurs...
         </div>
       )}
-      
+
       <div
         style={{
           display: "flex",
@@ -234,10 +234,10 @@ export default function AdminUsersStatic() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Rechercher (username, email, rôle)…"
-          style={{ padding: 10, borderRadius: 10, minWidth: 260 }}
+          style={{ padding: 10, borderRadius: 10, minWidth: 260, backgroundColor: "rgba(26,20,16,.8)", color: "#e8dcc8", border: "1px solid rgba(184, 115, 51, 0.3)" }}
         />
 
-        <button onClick={openCreate} style={{ padding: "10px 14px", borderRadius: 10 }}>
+        <button onClick={openCreate} style={{ padding: "10px 14px", borderRadius: 10, backgroundColor: "#8b5a2b", color: "#e8dcc8", border: "1px solid #b87333" }}>
           + Nouvel utilisateur
         </button>
       </div>
@@ -251,25 +251,25 @@ export default function AdminUsersStatic() {
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr style={{ textAlign: "left" }}>
-              <th style={{ padding: 10 }}>ID</th>
-              <th style={{ padding: 10 }}>Username</th>
-              <th style={{ padding: 10 }}>Email</th>
-              <th style={{ padding: 10 }}>Rôle</th>
-              <th style={{ padding: 10 }}>Actions</th>
+            <tr style={{ textAlign: "left", backgroundColor: "rgba(184, 115, 51, 0.1)" }}>
+              <th style={{ padding: 10, color: "#d4955f", fontWeight: 800 }}>ID</th>
+              <th style={{ padding: 10, color: "#d4955f", fontWeight: 800 }}>Username</th>
+              <th style={{ padding: 10, color: "#d4955f", fontWeight: 800 }}>Email</th>
+              <th style={{ padding: 10, color: "#d4955f", fontWeight: 800 }}>Rôle</th>
+              <th style={{ padding: 10, color: "#d4955f", fontWeight: 800 }}>Actions</th>
             </tr>
           </thead>
 
           <tbody>
             {filtered.map((u) => (
               <tr key={u.id} style={{ borderTop: "1px solid rgba(255,255,255,.12)" }}>
-                <td style={{ padding: 10 }}>{u.id}</td>
-                <td style={{ padding: 10 }}>
+                <td style={{ padding: 10, color: "#e8dcc8" }}>{u.id}</td>
+                <td style={{ padding: 10, color: "#e8dcc8" }}>
                   <div style={{ fontWeight: 800 }}>{u.username}</div>
                   {u.biography && <div style={{ opacity: 0.8, fontSize: 13 }}>{u.biography}</div>}
                 </td>
-                <td style={{ padding: 10 }}>{u.email}</td>
-                <td style={{ padding: 10 }}>
+                <td style={{ padding: 10, color: "#e8dcc8" }}>{u.email}</td>
+                <td style={{ padding: 10, color: "#e8dcc8" }}>
                   <span
                     style={{
                       padding: "6px 10px",
@@ -286,10 +286,10 @@ export default function AdminUsersStatic() {
                   </span>
                 </td>
                 <td style={{ padding: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <button onClick={() => openEdit(u)} style={{ padding: "8px 10px", borderRadius: 10 }}>
+                  <button onClick={() => openEdit(u)} style={{ padding: "8px 10px", borderRadius: 10, backgroundColor: "#8b5a2b", color: "#e8dcc8", border: "1px solid #b87333" }}>
                     Modifier
                   </button>
-                  <button onClick={() => onDelete(u.id)} style={{ padding: "8px 10px", borderRadius: 10 }}>
+                  <button onClick={() => onDelete(u.id)} style={{ padding: "8px 10px", borderRadius: 10, backgroundColor: "#8b5a2b", color: "#e8dcc8", border: "1px solid #b87333" }}>
                     Supprimer
                   </button>
                 </td>
@@ -340,28 +340,28 @@ export default function AdminUsersStatic() {
                 value={form.username}
                 onChange={(e) => setForm((p) => ({ ...p, username: e.target.value }))}
                 placeholder="Username"
-                style={{ padding: 10, borderRadius: 10 }}
+                style={{ padding: 10, borderRadius: 10, backgroundColor: "rgba(26,20,16,.8)", color: "#e8dcc8", border: "1px solid rgba(184, 115, 51, 0.3)" }}
               />
 
               <input
                 value={form.email}
                 onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
                 placeholder="Email"
-                style={{ padding: 10, borderRadius: 10 }}
+                style={{ padding: 10, borderRadius: 10, backgroundColor: "rgba(26,20,16,.8)", color: "#e8dcc8", border: "1px solid rgba(184, 115, 51, 0.3)" }}
               />
 
               <input
                 value={form.role ?? ""}
                 onChange={(e) => setForm((p) => ({ ...p, role: e.target.value }))}
                 placeholder="Rôle (admin/editor/user)"
-                style={{ padding: 10, borderRadius: 10 }}
+                style={{ padding: 10, borderRadius: 10, backgroundColor: "rgba(26,20,16,.8)", color: "#e8dcc8", border: "1px solid rgba(184, 115, 51, 0.3)" }}
               />
 
               <input
                 value={form.password}
                 onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
                 placeholder={mode === "create" ? "Mot de passe (obligatoire)" : "Mot de passe (optionnel)"}
-                style={{ padding: 10, borderRadius: 10 }}
+                style={{ padding: 10, borderRadius: 10, backgroundColor: "rgba(26,20,16,.8)", color: "#e8dcc8", border: "1px solid rgba(184, 115, 51, 0.3)" }}
                 type="password"
               />
 
@@ -369,22 +369,22 @@ export default function AdminUsersStatic() {
                 value={form.avatar_url ?? ""}
                 onChange={(e) => setForm((p) => ({ ...p, avatar_url: e.target.value }))}
                 placeholder="Avatar URL (optionnel)"
-                style={{ padding: 10, borderRadius: 10, gridColumn: "1 / -1" }}
+                style={{ padding: 10, borderRadius: 10, gridColumn: "1 / -1", backgroundColor: "rgba(26,20,16,.8)", color: "#e8dcc8", border: "1px solid rgba(184, 115, 51, 0.3)" }}
               />
 
               <textarea
                 value={form.biography ?? ""}
                 onChange={(e) => setForm((p) => ({ ...p, biography: e.target.value }))}
                 placeholder="Biographie (optionnel)"
-                style={{ padding: 10, borderRadius: 10, gridColumn: "1 / -1", minHeight: 90 }}
+                style={{ padding: 10, borderRadius: 10, gridColumn: "1 / -1", minHeight: 90, backgroundColor: "rgba(26,20,16,.8)", color: "#e8dcc8", border: "1px solid rgba(184, 115, 51, 0.3)" }}
               />
             </div>
 
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 12 }}>
-              <button onClick={() => setOpen(false)} style={{ padding: "10px 14px", borderRadius: 10 }}>
+              <button onClick={() => setOpen(false)} style={{ padding: "10px 14px", borderRadius: 10, backgroundColor: "#8b5a2b", color: "#e8dcc8", border: "1px solid #b87333" }}>
                 Annuler
               </button>
-              <button onClick={onSubmit} style={{ padding: "10px 14px", borderRadius: 10 }}>
+              <button onClick={onSubmit} style={{ padding: "10px 14px", borderRadius: 10, backgroundColor: "#8b5a2b", color: "#e8dcc8", border: "1px solid #b87333" }}>
                 Enregistrer
               </button>
             </div>

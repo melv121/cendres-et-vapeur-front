@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { getOrders, createOrder, updateOrder, deleteOrder } from "../../api/api";
 
 type Mode = "create" | "edit";
 
@@ -9,43 +10,14 @@ type OrderCreate = {
   user_id: number;
 };
 
-type OrderUpdate = OrderCreate;
-
 type OrderOut = {
   id: number;
   status: string;
-  total_amount: string; // comme ton API
+  total_amount: string;
   invoice_file?: string | null;
   user_id: number;
-  created_at?: string; // ISO
+  created_at?: string;
 };
-
-const seedOrders: OrderOut[] = [
-  {
-    id: 101,
-    status: "paid",
-    total_amount: "129.90",
-    invoice_file: null,
-    user_id: 3,
-    created_at: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
-  },
-  {
-    id: 102,
-    status: "pending",
-    total_amount: "59.90",
-    invoice_file: "https://example.com/invoice/102.pdf",
-    user_id: 4,
-    created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-  },
-  {
-    id: 103,
-    status: "shipped",
-    total_amount: "89.00",
-    invoice_file: null,
-    user_id: 2,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
-  },
-];
 
 const emptyOrder: OrderCreate = {
   status: "pending",
@@ -54,8 +26,9 @@ const emptyOrder: OrderCreate = {
   user_id: 1,
 };
 
-export default function OrdersPageStatic() {
-  const [orders, setOrders] = useState<OrderOut[]>(seedOrders);
+export default function OrdersPage() {
+  const [orders, setOrders] = useState<OrderOut[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [query, setQuery] = useState("");
@@ -63,6 +36,24 @@ export default function OrdersPageStatic() {
   const [mode, setMode] = useState<Mode>("create");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<OrderCreate>(emptyOrder);
+
+  const fetchOrders = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getOrders();
+      const list = Array.isArray(data) ? data : [];
+      setOrders(list);
+    } catch (err: any) {
+      setError(err.message || "Erreur lors du chargement des commandes");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -96,7 +87,7 @@ export default function OrdersPageStatic() {
     setOpen(true);
   }
 
-  function onSubmit() {
+  async function onSubmit() {
     try {
       setError(null);
 
@@ -124,98 +115,143 @@ export default function OrdersPageStatic() {
       }
 
       if (mode === "create") {
-        const nextId = (orders.at(-1)?.id ?? 0) + 1;
-        const created: OrderOut = {
-          id: nextId,
+        const created = await createOrder({
           status: payload.status,
-          total_amount: String(payload.total_amount),
-          invoice_file: payload.invoice_file ?? null,
+          total_amount: Number(payload.total_amount),
           user_id: payload.user_id,
           created_at: new Date().toISOString(),
         };
 
+        setOrders((prev) => [...prev, created]);
+        });
         setOrders((prev) => [created, ...prev]);
       } else {
         if (!editingId) return;
-
-        const updatePayload: OrderUpdate = payload;
+        const updated = await updateOrder(editingId, {
+          status: payload.status,
+          total_amount: Number(payload.total_amount),
+          user_id: payload.user_id,
+        });
         setOrders((prev) =>
           prev.map((o) =>
             o.id === editingId
               ? {
-                  ...o,
-                  status: updatePayload.status,
-                  total_amount: String(updatePayload.total_amount),
-                  invoice_file: updatePayload.invoice_file ?? null,
-                  user_id: updatePayload.user_id,
-                }
+                ...o,
+                status: updatePayload.status,
+                total_amount: String(updatePayload.total_amount),
+                invoice_file: updatePayload.invoice_file ?? null,
+                user_id: updatePayload.user_id,
+              }
               : o
           )
+          prev.map((o) => (o.id === editingId ? updated : o))
         );
       }
 
       setOpen(false);
     } catch (e: any) {
-      setError("Erreur lors de l'enregistrement.");
+      setError(e.message || "Erreur lors de l'enregistrement.");
     }
   }
 
-  function onDelete(id: number) {
+  async function onDelete(id: number) {
     const ok = confirm("Supprimer cette commande ?");
     if (!ok) return;
 
-    setOrders((prev) => prev.filter((o) => o.id !== id));
+    try {
+      await deleteOrder(id);
+      setOrders((prev) => prev.filter((o) => o.id !== id));
+    } catch (e: any) {
+      setError(e.message || "Erreur lors de la suppression.");
+    }
   }
 
   return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 10,
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+        }}
+      >
     <section className="adminPage">
       <h1 className="adminPageTitle">Commandes</h1>
-      <p className="adminPageSubtitle">Version statique (sans API) — pour tester l’UI.</p>
 
       <div style={{ display: "flex", gap: 10, justifyContent: "space-between", flexWrap: "wrap" }}>
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Rechercher (id, statut, user_id, total)…"
-          style={{ padding: 10, borderRadius: 10, minWidth: 280 }}
+          style={{ padding: 10, borderRadius: 10, minWidth: 260, backgroundColor: "rgba(26,20,16,.8)", color: "#e8dcc8", border: "1px solid rgba(184, 115, 51, 0.3)" }}
         />
-        <button onClick={openCreate} style={{ padding: "10px 14px", borderRadius: 10 }}>
+
+        <button onClick={openCreate} style={{ padding: "10px 14px", borderRadius: 10, backgroundColor: "#8b5a2b", color: "#e8dcc8", border: "1px solid #b87333" }}>
           + Nouvelle commande
         </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={openCreate} style={{ padding: "10px 14px", borderRadius: 10 }}>
+            + Nouvelle commande
+          </button>
+          <button onClick={fetchOrders} style={{ padding: "10px 14px", borderRadius: 10 }}>
+            Actualiser
+          </button>
+        </div>
       </div>
 
       {error && (
         <div style={{ padding: 10, borderRadius: 10, border: "1px solid rgba(255,0,0,.3)" }}>
-          {error}
+          {String(error)}
         </div>
+      )}
+
+      {loading && (
+        <p style={{ textAlign: "center", padding: "2rem", opacity: 0.7 }}>Chargement des commandes…</p>
       )}
 
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr style={{ textAlign: "left" }}>
-              <th style={{ padding: 10 }}>ID</th>
-              <th style={{ padding: 10 }}>Statut</th>
-              <th style={{ padding: 10 }}>Total</th>
-              <th style={{ padding: 10 }}>User</th>
-              <th style={{ padding: 10 }}>Créée</th>
-              <th style={{ padding: 10 }}>Actions</th>
+            <tr style={{ textAlign: "left", backgroundColor: "rgba(184, 115, 51, 0.1)" }}>
+              <th style={{ padding: 10, color: "#d4955f", fontWeight: 800 }}>ID</th>
+              <th style={{ padding: 10, color: "#d4955f", fontWeight: 800 }}>Statut</th>
+              <th style={{ padding: 10, color: "#d4955f", fontWeight: 800 }}>Total</th>
+              <th style={{ padding: 10, color: "#d4955f", fontWeight: 800 }}>User</th>
+              <th style={{ padding: 10, color: "#d4955f", fontWeight: 800 }}>Créée</th>
+              <th style={{ padding: 10, color: "#d4955f", fontWeight: 800 }}>Actions</th>
             </tr>
           </thead>
 
           <tbody>
             {filtered.map((o) => (
               <tr key={o.id} style={{ borderTop: "1px solid rgba(255,255,255,.12)" }}>
-                <td style={{ padding: 10 }}>#{o.id}</td>
-                <td style={{ padding: 10 }}>{o.status}</td>
-                <td style={{ padding: 10 }}>{o.total_amount}</td>
-                <td style={{ padding: 10 }}>{o.user_id}</td>
-                <td style={{ padding: 10 }}>{formatDate(o.created_at)}</td>
+                <td style={{ padding: 10, color: "#e8dcc8" }}>{o.id}</td>
+                <td style={{ padding: 10, color: "#e8dcc8" }}>
+                  <span
+                    style={{
+                      padding: "6px 10px",
+                      borderRadius: 999,
+                      border: "1px solid rgba(255,255,255,.18)",
+                      background: "rgba(255,255,255,.06)",
+                      fontWeight: 800,
+                      textTransform: "uppercase",
+                      fontSize: 12,
+                      letterSpacing: ".08em",
+                    }}
+                  >
+                    {o.status}
+                  </span>
+                </td>
+                <td style={{ padding: 10, fontWeight: 800, color: "#e8dcc8" }}>{o.total_amount}</td>
+                <td style={{ padding: 10, color: "#e8dcc8" }}>User #{o.user_id}</td>
+                <td style={{ padding: 10, opacity: 0.8, fontSize: 13, color: "#e8dcc8" }}>{formatDate(o.created_at)}</td>
                 <td style={{ padding: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <button onClick={() => openEdit(o)} style={{ padding: "8px 10px", borderRadius: 10 }}>
+                  <button onClick={() => openEdit(o)} style={{ padding: "8px 10px", borderRadius: 10, backgroundColor: "#8b5a2b", color: "#e8dcc8", border: "1px solid #b87333" }}>
                     Modifier
                   </button>
-                  <button onClick={() => onDelete(o.id)} style={{ padding: "8px 10px", borderRadius: 10 }}>
+                  <button onClick={() => onDelete(o.id)} style={{ padding: "8px 10px", borderRadius: 10, backgroundColor: "#8b5a2b", color: "#e8dcc8", border: "1px solid #b87333" }}>
                     Supprimer
                   </button>
                 </td>
@@ -233,50 +269,84 @@ export default function OrdersPageStatic() {
         </table>
       </div>
 
+      {/* Modal */}
       {open && (
-        <Modal onClose={() => setOpen(false)} title={mode === "create" ? "Créer une commande" : "Modifier la commande"}>
-          <div style={{ display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr" }}>
-            <input
-              value={form.status}
-              onChange={(e) => setForm((p) => ({ ...p, status: e.target.value }))}
-              placeholder="Statut (pending/paid/...)"
-              style={{ padding: 10, borderRadius: 10 }}
-            />
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,.55)",
+            display: "grid",
+            placeItems: "center",
+            zIndex: 2000,
+            padding: 16,
+          }}
+          onClick={() => setOpen(false)}
+        >
+          <div
+            style={{
+              width: "min(720px, 100%)",
+              borderRadius: 16,
+              padding: 16,
+              background: "rgba(26,20,16,.98)",
+              border: "1px solid rgba(255,255,255,.12)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ marginTop: 0 }}>
+              {mode === "create" ? "Créer une commande" : "Modifier la commande"}
+            </h2>
 
-            <input
-              value={String(form.total_amount)}
-              onChange={(e) => setForm((p) => ({ ...p, total_amount: e.target.value }))}
-              placeholder="Total"
-              style={{ padding: 10, borderRadius: 10 }}
-            />
+            <div style={{ display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr" }}>
+              <select
+                value={form.status}
+                onChange={(e) => setForm((p) => ({ ...p, status: e.target.value }))}
+                style={{ padding: 10, borderRadius: 10, backgroundColor: "rgba(26,20,16,.8)", color: "#e8dcc8", border: "1px solid rgba(184, 115, 51, 0.3)" }}
+              >
+                <option value="">-- Sélectionner un statut --</option>
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+                <option value="shipped">Shipped</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
 
-            <input
-              value={form.user_id}
-              onChange={(e) => setForm((p) => ({ ...p, user_id: Number(e.target.value) }))}
-              placeholder="user_id"
-              type="number"
-              style={{ padding: 10, borderRadius: 10 }}
-            />
+              <input
+                value={String(form.total_amount)}
+                onChange={(e) => setForm((p) => ({ ...p, total_amount: e.target.value }))}
+                placeholder="Total"
+                type="number"
+                step="0.01"
+                style={{ padding: 10, borderRadius: 10, backgroundColor: "rgba(26,20,16,.8)", color: "#e8dcc8", border: "1px solid rgba(184, 115, 51, 0.3)" }}
+              />
 
-            <input
-              value={form.invoice_file ?? ""}
-              onChange={(e) => setForm((p) => ({ ...p, invoice_file: e.target.value }))}
-              placeholder="invoice_file (url) optionnel"
-              style={{ padding: 10, borderRadius: 10 }}
-            />
+              <input
+                value={form.user_id}
+                onChange={(e) => setForm((p) => ({ ...p, user_id: Number(e.target.value) }))}
+                placeholder="user_id"
+                type="number"
+                style={{ padding: 10, borderRadius: 10, backgroundColor: "rgba(26,20,16,.8)", color: "#e8dcc8", border: "1px solid rgba(184, 115, 51, 0.3)" }}
+              />
+
+              <input
+                value={form.invoice_file ?? ""}
+                onChange={(e) => setForm((p) => ({ ...p, invoice_file: e.target.value }))}
+                placeholder="invoice_file (url) optionnel"
+                style={{ padding: 10, borderRadius: 10, backgroundColor: "rgba(26,20,16,.8)", color: "#e8dcc8", border: "1px solid rgba(184, 115, 51, 0.3)" }}
+              />
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 12 }}>
+              <button onClick={() => setOpen(false)} style={{ padding: "10px 14px", borderRadius: 10, backgroundColor: "#8b5a2b", color: "#e8dcc8", border: "1px solid #b87333" }}>
+                Annuler
+              </button>
+              <button onClick={onSubmit} style={{ padding: "10px 14px", borderRadius: 10, backgroundColor: "#8b5a2b", color: "#e8dcc8", border: "1px solid #b87333" }}>
+                Enregistrer
+              </button>
+            </div>
           </div>
-
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 12 }}>
-            <button onClick={() => setOpen(false)} style={{ padding: "10px 14px", borderRadius: 10 }}>
-              Annuler
-            </button>
-            <button onClick={onSubmit} style={{ padding: "10px 14px", borderRadius: 10 }}>
-              Enregistrer
-            </button>
-          </div>
-        </Modal>
+        </div>
       )}
-    </section>
+    </div>
   );
 }
 
@@ -284,43 +354,4 @@ function formatDate(dateTime?: string) {
   if (!dateTime) return "-";
   const d = new Date(dateTime);
   return isNaN(d.getTime()) ? dateTime : d.toLocaleString();
-}
-
-function Modal({
-  title,
-  onClose,
-  children,
-}: {
-  title: string;
-  onClose: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,.55)",
-        display: "grid",
-        placeItems: "center",
-        zIndex: 2000,
-        padding: 16,
-      }}
-      onClick={onClose}
-    >
-      <div
-        style={{
-          width: "min(820px, 100%)",
-          borderRadius: 16,
-          padding: 16,
-          background: "rgba(26,20,16,.98)",
-          border: "1px solid rgba(255,255,255,.12)",
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 style={{ marginTop: 0 }}>{title}</h2>
-        {children}
-      </div>
-    </div>
-  );
 }
