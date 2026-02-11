@@ -1,0 +1,143 @@
+/* Admin Header Layout */
+.adminHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background-color: #1a1410;
+  border-bottom: 2px solid #8b5a2b;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.adminHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.adminLogo {
+  height: 48px;
+  width: auto;
+  filter: drop-shadow(0 0 8px rgba(184, 115, 51, 0.4));
+}
+
+.adminTitle {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #d4955f;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-family: 'Courier New', monospace;
+}
+
+/* Admin Navigation */
+.adminNav {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.adminNavLinks {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.adminNavLinks a {
+  padding: 10px 16px;
+  color: #e8dcc8;
+  text-decoration: none;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border: 2px solid transparent;
+  background: transparent;
+  transition: all 0.3s ease;
+  font-family: 'Courier New', monospace;
+}
+
+.adminNavLinks a:hover {
+  color: #d4955f;
+  border-color: #8b5a2b;
+  background-color: rgba(139, 90, 43, 0.2);
+}
+
+.adminNavLinks a.active {
+  color: #e8dcc8;
+  background-color: #8b5a2b;
+  border-color: #b87333;
+  box-shadow: 0 0 15px rgba(184, 115, 51, 0.4);
+}
+
+/* Admin Nav Actions */
+.adminNavActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: 16px;
+  padding-left: 16px;
+  border-left: 2px solid #4a4a4a;
+}
+
+.adminLogoutBtn {
+  padding: 10px 20px;
+  background: transparent;
+  border: 2px solid #8b4513;
+  color: #e8dcc8;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Courier New', monospace;
+}
+
+.adminLogoutBtn:hover {
+  background-color: rgba(139, 69, 19, 0.3);
+  border-color: #b87333;
+  color: #d4955f;
+  box-shadow: 0 0 10px rgba(139, 69, 19, 0.4);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .adminHeader {
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .adminNav {
+    width: 100%;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .adminNavLinks {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .adminNavActions {
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
+    padding-top: 12px;
+    border-top: 2px solid #4a4a4a;
+  }
+}
+
+@media (max-width: 768px) {
+  .adminNavLinks a {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+
+  .adminTitle {
+    font-size: 1.1rem;
+  }
+
+  .adminLogo {
+    height: 36px;
+  }
+}

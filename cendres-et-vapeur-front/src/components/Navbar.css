@@ -173,4 +173,58 @@
     padding: 0.75rem 1rem;
     font-size: 1.2rem;
   }
+
+  .navbar-user {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+/* User connected styles */
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.navbar-username {
+  color: var(--copper-light);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.navbar-role {
+  background: linear-gradient(135deg, #8b5a2b 0%, #b87333 100%);
+  color: #1a1410;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+  border-radius: 2px;
+}
+
+.navbar-logout {
+  background: transparent;
+  border: 1px solid var(--copper-dark);
+  color: var(--steam);
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.navbar-logout:hover {
+  background-color: rgba(184, 115, 51, 0.2);
+  border-color: var(--copper);
+  color: var(--copper-light);
+}
+
+.navbar-admin {
+  color: #d4af37 !important;
+  font-weight: 600;
+}
+
+.navbar-admin:hover {
+  color: #f0d060 !important;
 }

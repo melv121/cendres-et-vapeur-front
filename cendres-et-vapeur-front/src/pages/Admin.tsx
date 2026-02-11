@@ -1,4 +1,5 @@
 import { useState } from "react";
+import AdminHeader from "../components/admin/AdminHeader";
 import AdminProducts from "../components/admin/AdminProduct";
 import AdminUsers from "../components/admin/AdminUsers";
 import TelegraphChat from "../components/admin/TelegraphChat";
@@ -12,27 +13,7 @@ export default function Admin() {
 
   return (
     <div className="adminPage">
-      <header className="adminHeader">
-        <div className="adminTitle">
-          <h1>Dashboard Admin</h1>
-          <p>Outils pour les grades élevés (Éditeurs / Admins)</p>
-        </div>
-
-        <div className="adminTabs">
-          <button
-            className={tab === "products" ? "active" : ""}
-            onClick={() => setTab("products")}
-          >
-            Produits
-          </button>
-          <button
-            className={tab === "users" ? "active" : ""}
-            onClick={() => setTab("users")}
-          >
-            Utilisateurs
-          </button>
-        </div>
-      </header>
+      <AdminHeader />
 
       <main className="adminGrid">
         <section className="adminPanel">

@@ -1,4 +1,5 @@
 import type { Product } from '../types/Product';
+import { getHeaders } from '../api/api';
 
 // Interface pour les produits de l'API
 interface ApiProduct {
@@ -32,7 +33,10 @@ function mapApiProductToProduct(apiProduct: ApiProduct): Product {
 // Récupérer les produits depuis l'API
 export async function getAllShopProducts(): Promise<Product[]> {
   try {
-    const response = await fetch('/products');
+    const response = await fetch('/products', {
+      headers: getHeaders(),
+      
+    });
     
     if (!response.ok) {
       throw new Error(`Erreur API: ${response.status}`);
@@ -74,7 +78,10 @@ const SHOP_PRODUCTS_BACKUP: Product[] = [
 
 export const getShopProductById = async (id: number): Promise<Product | undefined> => {
   try {
-    const response = await fetch(`/products/${id}`);
+    const response = await fetch(`/products/${id}`, {
+      headers: getHeaders(),
+      
+    });
     if (!response.ok) throw new Error('Produit non trouvé');
     const apiProduct: ApiProduct = await response.json();
     return mapApiProductToProduct(apiProduct);

@@ -55,15 +55,29 @@ export default function AdminProducts() {
   // Créer un nouveau produit
   const onCreate = async (p: Omit<Product, 'id'>) => {
     try {
-      const newProduct = await createProduct({
+      console.log('Création produit avec:', {
         name: p.name,
         description: p.description || '',
         category_id: p.category_id || 1,
-        stock: p.stock,
-        base_price: p.price,
-        current_price: p.price,
+        stock: Number(p.stock),
+        base_price: Number(p.price),
+        current_price: Number(p.price),
         popularity_score: 0,
       });
+      
+      const newProduct = await createProduct({
+        name: p.name,
+        description: p.description || '',
+        image_url: null,
+        category_id: p.category_id || 1,
+        stock: Number(p.stock),
+        base_price: Number(p.price),
+        current_price: Number(p.price),
+        popularity_score: 0,
+      });
+      
+      console.log('Produit créé:', newProduct);
+      
       // Ajouter le nouveau produit à la liste
       setRows((prev) => [...prev, {
         id: newProduct.id,
@@ -76,21 +90,28 @@ export default function AdminProducts() {
       }]);
       setIsCreating(false);
     } catch (err: any) {
+      console.error('Erreur création produit:', err);
       alert('Erreur lors de la création: ' + err.message);
     }
   };
 
   const onSave = async (p: Product) => {
     try {
+      // L'API exige TOUS les champs pour la mise à jour
       await updateProduct(p.id, {
         name: p.name,
-        description: p.description,
-        current_price: p.price,
-        stock: p.stock,
+        description: p.description || '',
+        image_url: null,
+        category_id: p.category_id || 1,
+        stock: Number(p.stock),
+        base_price: Number(p.price),
+        current_price: Number(p.price),
+        popularity_score: 0,
       });
       setRows((prev) => prev.map((x) => (x.id === p.id ? p : x)));
       setSelected(null);
     } catch (err: any) {
+      console.error('Erreur mise à jour produit:', err);
       alert('Erreur lors de la sauvegarde: ' + err.message);
     }
   };
