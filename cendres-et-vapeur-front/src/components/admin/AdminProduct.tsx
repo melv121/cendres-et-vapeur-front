@@ -64,7 +64,7 @@ export default function AdminProducts() {
         current_price: Number(p.price),
         popularity_score: 0,
       });
-      
+
       const newProduct = await createProduct({
         name: p.name,
         description: p.description || '',
@@ -75,9 +75,9 @@ export default function AdminProducts() {
         current_price: Number(p.price),
         popularity_score: 0,
       });
-      
+
       console.log('Produit créé:', newProduct);
-      
+
       // Ajouter le nouveau produit à la liste
       setRows((prev) => [...prev, {
         id: newProduct.id,
@@ -129,7 +129,7 @@ export default function AdminProducts() {
   if (loading) {
     return (
       <div className="admBlock">
-        <p style={{ textAlign: 'center', padding: '2rem' }}>Chargement des produits...</p>
+        <p style={{ textAlign: 'center', padding: '2rem', color: '#d4955f' }}>Chargement des produits...</p>
       </div>
     );
   }
@@ -195,9 +195,8 @@ export default function AdminProducts() {
                 <td>{r.stock}</td>
                 <td>
                   <span
-                    className={`pill ${
-                      r.status === "ACTIVE" ? "ok" : "warn"
-                    }`}
+                    className={`pill ${r.status === "ACTIVE" ? "ok" : "warn"
+                      }`}
                   >
                     {r.status}
                   </span>
