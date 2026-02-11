@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import "./calendar.css";
+import "../admin/pagestyle/calendar.css";
 
 type ViewMode = "week" | "month";
 

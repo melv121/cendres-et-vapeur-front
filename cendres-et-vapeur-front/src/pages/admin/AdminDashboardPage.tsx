@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./adminDashboard.css";
+import "../admin/pagestyle/adminDashboard.css";
 
 type UserOut = {
   id: number;

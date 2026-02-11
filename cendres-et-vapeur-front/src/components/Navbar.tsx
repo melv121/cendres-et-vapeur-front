@@ -84,7 +84,7 @@ const Navbar: React.FC = () => {
             <Link to="/shop" className="navbar-link">Boutique</Link>
           </li>
           <li className="navbar-item">
-            <Link to="/about" className="navbar-link">À propos</Link>
+            <Link to="/infos" className="navbar-link">À propos</Link>
           </li>
           <li className="navbar-item">
             <Link to="/contact" className="navbar-link">Contact</Link>

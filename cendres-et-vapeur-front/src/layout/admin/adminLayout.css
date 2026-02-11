@@ -133,3 +133,36 @@
   width: auto;
   object-fit: contain;
 }
+
+
+/* === TELEGRAPHE LINK === */
+.adminNavLinks a.telegraphe-link {
+  position: relative; /* 🔑 clé du fix */
+  padding-right: 22px; /* espace pour le badge */
+}
+
+/* Badge message */
+.msj-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+
+  background: #b87333;
+  color: #1a1410;
+
+  font-size: 0.7rem;
+  font-weight: 900;
+
+  padding: 2px 6px;
+  min-width: 18px;
+  height: 18px;
+
+  border-radius: 999px;
+  text-align: center;
+  line-height: 1;
+
+  box-shadow: 0 4px 10px rgba(0,0,0,.4);
+  border: 1px solid rgba(255,255,255,.35);
+
+  pointer-events: none; /* ne bloque pas le clic */
+}

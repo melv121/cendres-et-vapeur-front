@@ -2,6 +2,7 @@ import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import "./adminLayout.css";
 
+
 export default function AdminHeader() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -18,8 +19,11 @@ export default function AdminHeader() {
     if (location.pathname.startsWith("/admin/utilisateurs")) return "Utilisateurs";
     if (location.pathname.startsWith("/admin/commandes")) return "Commandes";
     if (location.pathname.startsWith("/admin/calendrier")) return "Calendrier";
-    if (location.pathname.startsWith("/admin/messages")) return "Messagerie";
+    if (location.pathname.startsWith("/admin/telegraphe")) return "Télégraphe";
     if (location.pathname.startsWith("/admin/journal")) return "Journal d’activité";
+    if (location.pathname.startsWith("/admin/statistiques")) return "Statistiques";
+
+
     return "Cendres et Vapeur";
   };
 
@@ -48,11 +52,19 @@ export default function AdminHeader() {
       Commandes
     </NavLink>
 
-    
+    <NavLink to="/admin/telegraphe" className={({ isActive }) => (isActive ? "active telegraphe-link" : "telegraphe-link")}>
+  Télégraphe <span className="msj-count">0</span>
+</NavLink>
+
 
     <NavLink to="/admin/calendrier" className={({ isActive }) => (isActive ? "active" : "")}>
       Calendrier
     </NavLink>
+
+    <NavLink to="/admin/statistiques" className={({ isActive }) => (isActive ? "active" : "")}>
+  Statistiques
+</NavLink>
+
 
     <NavLink to="/admin/journal" className={({ isActive }) => (isActive ? "active" : "")}>
       Journal

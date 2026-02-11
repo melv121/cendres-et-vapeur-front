@@ -11,11 +11,13 @@ import Login from "./pages/auth/login/Login";
 import Register from "./pages/auth/register/Register";
 import AdminPage from "./pages/Admin";
 import Cart from "./pages/Cart";
-
+import AdminTelegraphPage from "./pages/admin/AdminTelegraphePage";
+import AdminStatsPage from "./pages/admin/AdminStatsPage";
 import AdminChatPage from "./pages/admin/AdminChatPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import OrdersPage from "./pages/admin/OrdersPage";
 import JournalPage from "./pages/admin/JournalPage";
+import Contact from "./pages/contact";
 import CalendarPage from "./pages/admin/CalendarPage";
 
 // Composants admin directs (avec API)
@@ -40,6 +42,7 @@ function AppContent() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/contact" element={<Contact />} />
           <Route path="/infos" element={<Infos />} />
           <Route path="/shop" element={<Shop />} />
           <Route path="/cart" element={<Cart />} />
@@ -48,7 +51,8 @@ function AppContent() {
           <Route path="/admin/utilisateurs" element={<AdminUsers />} />
           <Route path="/admin/messages" element={<AdminChatPage />} />
           <Route path="/admin" element={<AdminDashboardPage />} />
-
+          <Route path="/admin/telegraphe" element={<AdminTelegraphPage />} />
+          <Route path="/admin/statistiques" element={<AdminStatsPage />} />
           <Route path="/admin/commandes" element={<OrdersPage />} />
           <Route path="/admin/journal" element={<JournalPage />} />
           <Route path="/admin/calendrier" element={<CalendarPage />} />
