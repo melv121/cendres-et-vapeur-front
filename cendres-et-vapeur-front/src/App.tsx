@@ -11,6 +11,7 @@ import Login from "./pages/auth/login/Login";
 import Register from "./pages/auth/register/Register";
 import AdminPage from "./pages/Admin";
 import Cart from "./pages/Cart";
+import ProductDetail from "./pages/ProductDetail";
 import AdminTelegraphPage from "./pages/admin/AdminTelegraphePage";
 import AdminStatsPage from "./pages/admin/AdminStatsPage";
 import AdminChatPage from "./pages/admin/AdminChatPage";
@@ -47,6 +48,7 @@ function AppContent() {
           <Route path="/shop" element={<Shop />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/admin/produits" element={<AdminProducts/>} />
           <Route path="/admin/utilisateurs" element={<AdminUsers />} />
           <Route path="/admin/messages" element={<AdminChatPage />} />
