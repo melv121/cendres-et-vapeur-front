@@ -236,7 +236,7 @@ export default function AdminUsersStatic() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       {loading && (
-        <div style={{ padding: 20, textAlign: 'center' }}>
+        <div style={{ padding: 20, textAlign: 'center', color: '#d4955f' }}>
           Chargement des utilisateurs...
         </div>
       )}
