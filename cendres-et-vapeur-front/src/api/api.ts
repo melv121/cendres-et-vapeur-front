@@ -7,6 +7,9 @@ const getHeaders = (): HeadersInit => {
   const token = localStorage.getItem('cev_auth_token');
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
+    console.log('[getHeaders] Token trouvé et ajouté au header (longueur:', token.length, ')');
+  } else {
+    console.warn('[getHeaders] ⚠️ Pas de token trouvé dans localStorage!');
   }
   return headers;
 };
@@ -400,25 +403,35 @@ const register = async (username: string, email: string, password: string) => {
 export const deleteShiftNote = async (id: number) => {
   const response = await fetch(`${API_BASE_URL}/shift-notes/${id}`, {
     method: 'DELETE',
-
     headers: getHeaders(),
   });
   return response.json();
 };
 
 export const getShiftNotes = async () => {
+  console.log('[getShiftNotes] Tentative de chargement...');
   const response = await fetch(`${API_BASE_URL}/shift-notes/`, {
     method: 'GET',
-
     headers: getHeaders(),
   });
+  
+  console.log('[getShiftNotes] Statut réponse:', response.status);
+  
+  if (!response.ok) {
+    console.error('[getShiftNotes] ❌ Erreur', response.status, '-', response.statusText);
+    if (response.status === 401) {
+      console.error('[getShiftNotes] ⚠️ 401 Unauthorized - Vérifiez le token dans localStorage');
+      const token = localStorage.getItem('cev_auth_token');
+      console.error('[getShiftNotes] Token présent:', !!token);
+    }
+  }
+  
   return response.json();
 };
 
 export const getShiftNotesById = async (id: number) => {
   const response = await fetch(`${API_BASE_URL}/shift-notes/${id}`, {
     method: 'GET',
-
     headers: getHeaders(),
   });
   return response.json();
@@ -427,20 +440,31 @@ export const getShiftNotesById = async (id: number) => {
 export const updateShiftNotes = async (id: number, data: any) => {
   const response = await fetch(`${API_BASE_URL}/shift-notes/${id}`, {
     method: 'PUT',
-
     headers: getHeaders(),
     body: JSON.stringify(data),
   });
   return response.json();
 };
 
-export const createShiftNote = async (data: any, id: number) => {
-  const response = await fetch(`${API_BASE_URL}/shift-notes/${id}`, {
+export const createShiftNote = async (data: any) => {
+  console.log('[createShiftNote] Création avec données:', data);
+  const response = await fetch(`${API_BASE_URL}/shift-notes/`, {
     method: 'POST',
-
     headers: getHeaders(),
     body: JSON.stringify(data),
   });
+  
+  console.log('[createShiftNote] Statut réponse:', response.status);
+  
+  if (!response.ok) {
+    console.error('[createShiftNote] ❌ Erreur', response.status, '-', response.statusText);
+    if (response.status === 401) {
+      console.error('[createShiftNote] ⚠️ 401 Unauthorized - Token invalide ou expiré');
+      const token = localStorage.getItem('cev_auth_token');
+      console.error('[createShiftNote] Token dans localStorage:', token ? '✓ Présent' : '✗ Absent');
+    }
+  }
+  
   return response.json();
 };
 
