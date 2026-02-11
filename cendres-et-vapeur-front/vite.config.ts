@@ -6,6 +6,11 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
+      '/colony-events/toxicity/status': {
+        target: 'http://89.168.38.93',
+        changeOrigin: true,
+        secure: false,
+      },
       '/api': {
         target: 'http://89.168.38.93',
         changeOrigin: true,

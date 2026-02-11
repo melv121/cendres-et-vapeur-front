@@ -22,7 +22,7 @@ import CalendarPage from "./pages/admin/CalendarPage";
 import AdminProducts from "./components/admin/AdminProduct";
 import AdminUsers from "./components/admin/AdminUsers";
 
-
+import { useToxicityMonitor } from "./hooks/useToxicityMonitor";
 
 
 import "./App.css";
@@ -31,8 +31,39 @@ function AppContent() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
 
+  const { isToxic, toxicityLevel, threshold, apiData } = useToxicityMonitor();
   return (
     <div className="app-container">
+        {/* Indicateur de toxicité */}
+      <div style={{
+        position: 'fixed',
+        top: '10px',
+        right: '10px',
+        padding: '10px',
+        backgroundColor: isToxic ? '#ff0000' : '#00ff00',
+        color: isToxic ? '#ffffff' : '#000000',
+        borderRadius: '5px',
+        fontSize: '12px',
+        zIndex: '9999',
+        fontFamily: 'monospace'
+      }}>
+        <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
+          {apiData?.alert_level || 'UNKNOWN'} - {apiData?.status || 'UNKNOWN'}
+        </div>
+        <div>
+          Toxicité: {(toxicityLevel * 100).toFixed(1)}% / {(threshold * 100).toFixed(1)}%
+          {isToxic && ' ⚠️ TOXIQUE'}
+        </div>
+        {apiData?.pollution && (
+          <div style={{ fontSize: '10px', marginTop: '5px' }}>
+            S: {apiData.pollution.sulfur?.toFixed(1)} | 
+            CO2: {apiData.pollution.carbon_dioxide?.toFixed(1)} | 
+            P: {apiData.pollution.particulates?.toFixed(1)} | 
+            O2: {apiData.pollution.oxygen?.toFixed(1)}
+          </div>
+        )}
+      </div>
+      
       {isAdminRoute ? <AdminHeader /> : <Header />}
 
       <main className="main-content">

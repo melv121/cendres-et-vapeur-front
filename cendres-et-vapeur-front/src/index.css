@@ -28,6 +28,24 @@ body {
   min-width: 320px;
   min-height: 100vh;
   overflow-x: hidden;
+transition: background-color 0.3s ease;
+}
+
+body.toxic {
+  background-color: #ff0000 !important;
+  color: #ffffff !important;
+}
+
+body.toxic :root {
+  background-color: #ff0000 !important;
+  color: #ffffff !important;
+}
+
+body.toxic * {
+  background-color: #ff0000 !important;
+  color: #ffffff !important;
+  border-color: #ffffff !important;
+
 }
 
 h1 {
