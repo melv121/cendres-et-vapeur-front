@@ -104,7 +104,9 @@ const Navbar: React.FC = () => {
               )}
               <li className="navbar-item navbar-user">
                 <span className="navbar-username">{user.username}</span>
-                <span className="navbar-role">{user.role}</span>
+                {user.role !== 'ADMIN' && (
+                  <span className="navbar-role">{user.role}</span>
+                )}
                 <button onClick={handleLogout} className="navbar-logout">Déconnexion</button>
               </li>
             </>
