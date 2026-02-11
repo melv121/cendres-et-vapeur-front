@@ -642,10 +642,14 @@ export const getDashboardStats = async () => {
     });
     if (resp.ok) {
       const json = await resp.json();
-      result.top_products = Array.isArray(json) ? json : json.results || json.data || [];
+      console.log('[getDashboardStats] Top products response:', json);
+      result.top_products = Array.isArray(json) ? json : json.top_products || json.results || json.data || [];
+      console.log('[getDashboardStats] Parsed top_products:', result.top_products);
+    } else {
+      console.log('[getDashboardStats] Top products API error:', resp.status);
     }
   } catch (e) {
-    // ignore, frontend will fallback
+    console.error('[getDashboardStats] Top products fetch failed:', e);
   }
 
   // Users (count)

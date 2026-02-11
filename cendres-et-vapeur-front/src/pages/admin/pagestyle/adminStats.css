@@ -1,5 +1,6 @@
 .adminStatsPage {
   padding: 1.5rem;
+  color: #e8dcc8;
 }
 
 .statsTop {
@@ -14,6 +15,7 @@
   font-size: 1.6rem;
   font-weight: 900;
   margin: 0;
+  color: #d4955f;
 }
 
 .statsSubtitle {
@@ -50,6 +52,7 @@
   margin: 0.35rem 0 0;
   font-size: 2rem;
   font-weight: 900;
+  color: #d4955f;
 }
 
 .statsHint {
@@ -78,8 +81,8 @@
 .bar {
   width: 100%;
   border-radius: 12px;
-  background: linear-gradient(180deg, rgba(205,127,50,0.95), rgba(180,115,51,0.45));
-  border: 1px solid rgba(205,127,50,0.35);
+  background: linear-gradient(180deg, rgba(205, 127, 50, 0.95), rgba(180, 115, 51, 0.45));
+  border: 1px solid rgba(205, 127, 50, 0.35);
   min-height: 8px;
 }
 
@@ -126,6 +129,11 @@
 }
 
 @media (max-width: 1000px) {
-  .statsCard { grid-column: span 12; }
-  .topRow { grid-template-columns: 1fr 90px 110px; }
+  .statsCard {
+    grid-column: span 12;
+  }
+
+  .topRow {
+    grid-template-columns: 1fr 90px 110px;
+  }
 }

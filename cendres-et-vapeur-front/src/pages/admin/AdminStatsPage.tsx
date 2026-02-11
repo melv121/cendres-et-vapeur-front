@@ -64,13 +64,18 @@ export default function AdminStatsPage() {
         const data: any = await getDashboardStats();
         if (!mounted) return;
 
+        console.log('[AdminStatsPage] getDashboardStats result:', data);
+
         // Map common possible fields from backend
         if (typeof data.total_users === 'number') setTotalUsers(data.total_users);
         if (typeof data.total_orders === 'number') setTotalOrders(data.total_orders);
         if (typeof data.total_revenue === 'number') setTotalRevenue(data.total_revenue);
 
         if (Array.isArray(data.top_products)) {
+          console.log('[AdminStatsPage] Setting top_products:', data.top_products);
           setTop5Products(data.top_products.slice(0, 5));
+        } else {
+          console.log('[AdminStatsPage] top_products is not an array:', data.top_products);
         }
 
         if (Array.isArray(data.orders_last_7_days)) {
