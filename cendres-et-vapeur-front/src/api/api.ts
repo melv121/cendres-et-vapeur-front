@@ -576,11 +576,14 @@ export const getProductsSearch = async () => {
 };
 
 export const getLogs = async () => {
+  console.log('[getLogs] Starting...');
   const response = await fetch(`${API_BASE_URL}/logs`, {
     method: 'GET',
     credentials: 'include',
     headers: getHeaders(),
   });
+
+  console.log('[getLogs] Response status:', response.status);
 
   const contentType = response.headers.get('content-type') || '';
   const text = await response.clone().text();
@@ -600,7 +603,9 @@ export const getLogs = async () => {
     }
   }
 
-  return response.json();
+  const json = await response.json();
+  console.log('[getLogs] Success, returning:', json);
+  return json;
 };
 
 export const getLogsByUser = async (id: number) => {
