@@ -20,53 +20,16 @@ type UserCreate = {
   biography?: string | null;
 };
 
-type UserUpdate = {
-  username: string;
-  email: string;
-  password?: string;
-  avatar_url?: string | null;
-  biography?: string | null;
-  role?: string;
-};
-
-const usersSeed: UserOut[] = [
-  {
-    id: 1,
-    username: "admin.valdrak",
-    email: "admin@valdrak.io",
-    role: "admin",
-    avatar_url: "",
-    biography: "Superviseur — accès complet.",
-  },
-  {
-    id: 2,
-    username: "editor.steam",
-    email: "editor@valdrak.io",
-    role: "editor",
-    avatar_url: "",
-    biography: "Éditeur — gestion contenu.",
-  },
-  {
-    id: 3,
-    username: "user.cendres",
-    email: "user@valdrak.io",
-    role: "user",
-    avatar_url: "",
-    biography: "Compte client.",
-  },
-];
-
 const emptyCreate: UserCreate & { role?: string } = {
   username: "",
   email: "",
   password: "",
-  avatar_url: "",
+  avatar_url: null,
   biography: "",
   role: "user",
 };
 
 export default function AdminUsersStatic() {
-  // ✅ Connecté à l'API
   const [users, setUsers] = useState<UserOut[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -90,7 +53,6 @@ export default function AdminUsersStatic() {
     }
   })();
 
-  // Charger les utilisateurs depuis l'API
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -135,7 +97,7 @@ export default function AdminUsersStatic() {
     setForm({
       username: u.username,
       email: u.email,
-      password: "", // optionnel en edit
+      password: "", 
       avatar_url: u.avatar_url ?? "",
       biography: u.biography ?? "",
       role: u.role,
@@ -147,7 +109,6 @@ export default function AdminUsersStatic() {
     try {
       setError(null);
 
-      // validations simples
       if (!form.username.trim()) {
         setError("Le username est obligatoire.");
         return;
@@ -163,7 +124,6 @@ export default function AdminUsersStatic() {
           return;
         }
 
-        // Appel API pour créer l'utilisateur
         const created = await createUser({
           username: form.username.trim(),
           email: form.email.trim(),
@@ -174,24 +134,23 @@ export default function AdminUsersStatic() {
         });
 
         setUsers((prev) => [created, ...prev]);
-          // Notify other pages (journal, widgets) that data changed
-          try { window.dispatchEvent(new Event('dataChanged')); } catch (_) {}
+        try { window.dispatchEvent(new Event('dataChanged')); } catch (_) { }
       } else {
         if (!editingId) return;
 
-        // Appel API pour mettre à jour l'utilisateur
-        const payload: UserUpdate = {
+        const payload: any = {
           username: form.username.trim(),
           email: form.email.trim(),
           avatar_url: form.avatar_url?.trim() || null,
           biography: form.biography?.trim() || null,
-          role: form.role?.trim() ? form.role.trim().toLowerCase() : undefined,
         };
 
-        // si password rempli → update password
-        if (form.password?.trim()) payload.password = form.password.trim();
+        payload.password = form.password?.trim() || "UNCHANGED";
 
-        const updated = await updateUser(editingId, payload);
+        if (form.role?.trim()) payload.role = form.role.trim().toLowerCase();
+
+        console.log('Update payload:', payload);
+        await updateUser(editingId, payload);
 
         setUsers((prev) =>
           prev.map((u) =>
@@ -207,14 +166,14 @@ export default function AdminUsersStatic() {
               : u
           )
         );
-          // Notify other pages (journal, widgets) that data changed
-          try { window.dispatchEvent(new Event('dataChanged')); } catch (_) {}
+        try { window.dispatchEvent(new Event('dataChanged')); } catch (_) { }
       }
 
       setOpen(false);
     } catch (e: any) {
       console.error('Create/update user failed', e);
-      setError(e?.message || "Erreur lors de l’enregistrement.");
+      console.error('Full error:', JSON.stringify(e, null, 2));
+      setError(e?.message || e?.toString() || "Erreur lors de l'enregistrement.");
     }
   }
 
@@ -225,8 +184,7 @@ export default function AdminUsersStatic() {
     try {
       await deleteUser(id);
       setUsers((prev) => prev.filter((u) => u.id !== id));
-        // Notify other pages (journal, widgets) that data changed
-        try { window.dispatchEvent(new Event('dataChanged')); } catch (_) {}
+      try { window.dispatchEvent(new Event('dataChanged')); } catch (_) { }
     } catch (err: any) {
       console.error('Erreur suppression user:', err);
       setError("Erreur lors de la suppression.");
