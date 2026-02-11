@@ -37,18 +37,44 @@ const createUser = async (userData: any) => {
     headers: getHeaders(),
     body: JSON.stringify(userData),
   });
-  
+
+  const text = await response.clone().text();
+  const contentType = response.headers.get('content-type') || '';
+
   if (!response.ok) {
-    const text = await response.text();
-    try {
-      const errorData = JSON.parse(text);
-      throw new Error(errorData.detail || `Erreur ${response.status}`);
-    } catch {
-      throw new Error(`Erreur ${response.status}: ${text}`);
+    if (contentType.includes('application/json')) {
+      try {
+        const obj = JSON.parse(text);
+        // Try to extract validation errors
+        if (obj.detail) throw new Error(String(obj.detail));
+        if (obj.errors) {
+          // obj.errors could be dict or list
+          if (Array.isArray(obj.errors)) {
+            const msgs = obj.errors.map((e: any) => e.msg || JSON.stringify(e)).join(' | ');
+            throw new Error(msgs);
+          } else if (typeof obj.errors === 'object') {
+            const parts: string[] = [];
+            for (const k of Object.keys(obj.errors)) {
+              const v = obj.errors[k];
+              parts.push(`${k}: ${Array.isArray(v) ? v.join(', ') : String(v)}`);
+            }
+            throw new Error(parts.join(' | '));
+          }
+        }
+        // Fallback to any message fields
+        if (obj.message) throw new Error(String(obj.message));
+        throw new Error(`Erreur ${response.status}`);
+      } catch (err: any) {
+        throw new Error(err?.message || `Erreur ${response.status}: ${text}`);
+      }
     }
+
+    // Non-JSON response
+    throw new Error(`Erreur ${response.status}: ${text.slice(0, 300)}`);
   }
-  
-  return response.json();
+
+  if (contentType.includes('application/json')) return response.json();
+  return JSON.parse(text || 'null');
 };
 
 const updateUser = async (id: number, userData: any) => {
@@ -57,18 +83,39 @@ const updateUser = async (id: number, userData: any) => {
     headers: getHeaders(),
     body: JSON.stringify(userData),
   });
-  
+
+  const text = await response.clone().text();
+  const contentType = response.headers.get('content-type') || '';
+
   if (!response.ok) {
-    const text = await response.text();
-    try {
-      const errorData = JSON.parse(text);
-      throw new Error(errorData.detail || `Erreur ${response.status}`);
-    } catch {
-      throw new Error(`Erreur ${response.status}: ${text}`);
+    if (contentType.includes('application/json')) {
+      try {
+        const obj = JSON.parse(text);
+        if (obj.detail) throw new Error(String(obj.detail));
+        if (obj.errors) {
+          if (Array.isArray(obj.errors)) {
+            const msgs = obj.errors.map((e: any) => e.msg || JSON.stringify(e)).join(' | ');
+            throw new Error(msgs);
+          } else if (typeof obj.errors === 'object') {
+            const parts: string[] = [];
+            for (const k of Object.keys(obj.errors)) {
+              const v = obj.errors[k];
+              parts.push(`${k}: ${Array.isArray(v) ? v.join(', ') : String(v)}`);
+            }
+            throw new Error(parts.join(' | '));
+          }
+        }
+        if (obj.message) throw new Error(String(obj.message));
+        throw new Error(`Erreur ${response.status}`);
+      } catch (err: any) {
+        throw new Error(err?.message || `Erreur ${response.status}: ${text}`);
+      }
     }
+    throw new Error(`Erreur ${response.status}: ${text.slice(0, 300)}`);
   }
-  
-  return response.json();
+
+  if (contentType.includes('application/json')) return response.json();
+  return JSON.parse(text || 'null');
 };
 
 const deleteUser = async (id: number) => {
@@ -530,6 +577,25 @@ export const getLogs = async () => {
         credentials: 'include', 
         headers: getHeaders(),
     });
+
+    const contentType = response.headers.get('content-type') || '';
+    const text = await response.clone().text();
+
+    if (!contentType.includes('application/json')) {
+      // Return a clearer error when server responds with HTML (e.g. index.html or error page)
+      const snippet = text.slice(0, 300).replace(/\s+/g, ' ').trim();
+      throw new Error(`Non-JSON response (${response.status}): ${snippet}`);
+    }
+
+    if (!response.ok) {
+      try {
+        const err = JSON.parse(text);
+        throw new Error(err.detail || `Erreur ${response.status}`);
+      } catch {
+        throw new Error(`Erreur ${response.status}: ${text.slice(0,300)}`);
+      }
+    }
+
     return response.json();
 };
 
@@ -539,7 +605,98 @@ export const getLogsByUser = async (id: number) => {
         credentials: 'include', 
         headers: getHeaders(),
     });
+
+    const contentType = response.headers.get('content-type') || '';
+    const text = await response.clone().text();
+
+    if (!contentType.includes('application/json')) {
+      const snippet = text.slice(0, 300).replace(/\s+/g, ' ').trim();
+      throw new Error(`Non-JSON response (${response.status}): ${snippet}`);
+    }
+
+    if (!response.ok) {
+      try {
+        const err = JSON.parse(text);
+        throw new Error(err.detail || `Erreur ${response.status}`);
+      } catch {
+        throw new Error(`Erreur ${response.status}: ${text.slice(0,300)}`);
+      }
+    }
+
     return response.json();
+};
+
+export const getDashboardStats = async () => {
+  // Aggregate a few backend endpoints to build dashboard stats for admin
+  const result: any = {};
+
+  // Top selling products
+  try {
+    const resp = await fetch(`${API_BASE_URL}/products/top/sales`, {
+      method: 'GET',
+      headers: getHeaders(),
+    });
+    if (resp.ok) {
+      const json = await resp.json();
+      result.top_products = Array.isArray(json) ? json : json.results || json.data || [];
+    }
+  } catch (e) {
+    // ignore, frontend will fallback
+  }
+
+  // Users (count)
+  try {
+    const resp = await fetch(`${API_BASE_URL}/users`, { headers: getHeaders() });
+    if (resp.ok) {
+      const json = await resp.json();
+      if (Array.isArray(json)) result.total_users = json.length;
+      else if (typeof json.total === 'number') result.total_users = json.total;
+      else if (typeof json.count === 'number') result.total_users = json.count;
+    }
+  } catch (e) {}
+
+  // Orders: count and revenue and last 7 days
+  try {
+    const resp = await fetch(`${API_BASE_URL}/orders`, { headers: getHeaders() });
+    if (resp.ok) {
+      const orders = await resp.json();
+      let list: any[] = [];
+      if (Array.isArray(orders)) list = orders;
+      else if (Array.isArray(orders.results)) list = orders.results;
+      else if (Array.isArray(orders.data)) list = orders.data;
+
+      result.total_orders = list.length;
+
+      // revenue: sum paid
+      const revenue = list.reduce((s: number, o: any) => {
+        const paid = (o.status || '').toLowerCase() === 'paid' || (o.paid === true);
+        const amount = Number(o.total_amount ?? o.amount ?? 0) || 0;
+        return s + (paid ? amount : 0);
+      }, 0);
+      result.total_revenue = revenue;
+
+      // orders last 7 days
+      const last7: { date: string; count: number }[] = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setHours(0,0,0,0);
+        d.setDate(d.getDate() - i);
+        last7.push({ date: d.toISOString().slice(0,10), count: 0 });
+      }
+      list.forEach((o: any) => {
+        const created = o.created_at || o.created || o.createdAt || o.date;
+        if (!created) return;
+        const d = new Date(created);
+        if (isNaN(d.getTime())) return;
+        const iso = d.toISOString().slice(0,10);
+        const slot = last7.find((s) => s.date === iso);
+        if (slot) slot.count += 1;
+      });
+      result.orders_last_7_days = last7.map((s) => ({ date: s.date, count: s.count }));
+    }
+  } catch (e) {}
+
+  return result;
 };
 
 

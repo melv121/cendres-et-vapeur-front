@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { getLogs } from "../../api/api";
 
 type LogItem = {
   type: "ORDER" | "PRODUCT" | "USER" | "SHIFT";
@@ -123,8 +124,56 @@ export default function JournalPageStatic() {
   const [orders] = useState<OrderOut[]>(ordersSeed);
   const [shiftNotes] = useState<ShiftNoteOut[]>(shiftNotesSeed);
 
+  const [apiLogs, setApiLogs] = useState<any[] | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // fetch function used on mount and on 'dataChanged' events
+  const fetchApiLogs = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getLogs();
+      if (Array.isArray(data)) setApiLogs(data);
+      else setError('Réponse API inattendue pour les logs');
+    } catch (err: any) {
+      console.error('getLogs failed:', err);
+      setError(err?.message || 'Erreur lors du chargement des logs');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchApiLogs();
+    const handler = () => { fetchApiLogs(); };
+    window.addEventListener('dataChanged', handler);
+    return () => { window.removeEventListener('dataChanged', handler); };
+  }, []);
+
   const logs = useMemo<LogItem[]>(() => {
     const items: LogItem[] = [];
+
+    // If API returned logs, prefer them
+    if (apiLogs && apiLogs.length > 0) {
+      apiLogs.slice(0, 80).forEach((raw: any) => {
+        const time = raw.created_at || raw.time || raw.timestamp || raw.date || raw.ts || "";
+        const title = raw.message || raw.action || raw.event || raw.type || JSON.stringify(raw).slice(0, 80);
+        const metaParts: string[] = [];
+        if (raw.user_id) metaParts.push(`User: ${raw.user_id}`);
+        if (raw.path) metaParts.push(`${raw.method || 'GET'} ${raw.path}`);
+        if (raw.status) metaParts.push(`Status: ${raw.status}`);
+        const meta = metaParts.join(' • ') || undefined;
+        items.push({
+          type: (raw.type || 'USER') as LogItem['type'],
+          title: String(title),
+          timeLabel: time ? new Date(time).toLocaleString() : '-',
+          meta,
+        });
+      });
+      return items.slice(0, 30);
+    }
+
 
     // Orders
     [...orders]
@@ -183,12 +232,18 @@ export default function JournalPageStatic() {
       t === "ORDER" ? 0 : t === "SHIFT" ? 1 : t === "PRODUCT" ? 2 : 3;
 
     return items.sort((a, b) => weight(a.type) - weight(b.type)).slice(0, 30);
-  }, [orders, products, users, shiftNotes]);
+  }, [orders, products, users, shiftNotes, apiLogs]);
 
   return (
     <section className="adminPage">
       <h1 className="adminPageTitle">Journal d’activité</h1>
-      <p className="adminPageSubtitle">Version statique (sans API) — pour tester l’UI.</p>
+      <p className="adminPageSubtitle">{apiLogs ? 'Journal (données depuis l’API)' : 'Version statique (sans API) — pour tester l’UI.'}</p>
+
+      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+        <button onClick={() => { setApiLogs(null); setError(null); setLoading(true); getLogs().then(d => setApiLogs(Array.isArray(d) ? d : [] as any[])).catch(e => setError(String(e))).finally(()=>setLoading(false)); }} style={{ padding: '6px 10px', borderRadius: 8 }}>Actualiser</button>
+        {loading && <div style={{ opacity: 0.8 }}>Chargement...</div>}
+        {error && <div style={{ color: '#ff8080' }}>{error}</div>}
+      </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 10 }}>
         {logs.map((l, i) => (

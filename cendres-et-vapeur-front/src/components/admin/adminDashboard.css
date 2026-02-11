@@ -1,0 +1,204 @@
+.adminDash{
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.adminDashTop{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.adminDashTitle{
+  margin: 0;
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.adminDashSub{
+  margin: 6px 0 0;
+  opacity: .85;
+}
+
+.adminDashActions{
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.adminDashActions button{
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.06);
+  cursor: pointer;
+}
+
+.adminDashActions button:hover{
+  background: rgba(255,255,255,.10);
+}
+
+.adminDashError{
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 0, 0, .25);
+  background: rgba(255, 0, 0, .08);
+}
+
+.adminCards{
+  display: grid;
+  grid-template-columns: repeat(4, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 1100px){
+  .adminCards{ grid-template-columns: repeat(2, minmax(170px, 1fr)); }
+}
+@media (max-width: 560px){
+  .adminCards{ grid-template-columns: 1fr; }
+}
+
+.adminCard{
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+  cursor: pointer;
+  transition: transform .15s ease, background .15s ease;
+}
+
+.adminCard:hover{
+  background: rgba(255,255,255,.07);
+  transform: translateY(-2px);
+}
+
+.adminCardLabel{
+  opacity: .85;
+  font-weight: 700;
+}
+
+.adminCardValue{
+  font-size: 34px;
+  font-weight: 900;
+  margin-top: 4px;
+}
+
+.adminCardHint{
+  opacity: .8;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.adminGrid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 980px){
+  .adminGrid{ grid-template-columns: 1fr; }
+}
+
+.adminPanel{
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+}
+
+.adminPanelWide{
+  grid-column: 1 / -1;
+}
+
+.adminPanelHead{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.adminPanelHead h2{
+  margin: 0;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.adminLinkBtn{
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.06);
+  cursor: pointer;
+}
+
+.adminLinkBtn:hover{
+  background: rgba(255,255,255,.10);
+}
+
+.adminMuted{
+  opacity: .8;
+  margin: 10px 0 0;
+}
+
+.adminTableWrap{
+  overflow-x: auto;
+  margin-top: 10px;
+}
+
+.adminTable{
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.adminTable th, .adminTable td{
+  padding: 10px;
+  border-top: 1px solid rgba(255,255,255,.10);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.adminList{
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.adminListItem{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.15);
+}
+
+.adminListMain{
+  display: flex;
+  flex-direction: column;
+}
+
+.adminListTitle{
+  font-weight: 800;
+}
+
+.adminListSub{
+  opacity: .8;
+  font-size: 13px;
+}
+
+.adminPill{
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.14);
+  opacity: .9;
+  font-size: 13px;
+}

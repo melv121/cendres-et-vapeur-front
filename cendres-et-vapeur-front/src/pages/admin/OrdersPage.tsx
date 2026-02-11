@@ -119,11 +119,8 @@ export default function OrdersPage() {
           status: payload.status,
           total_amount: Number(payload.total_amount),
           user_id: payload.user_id,
-          created_at: new Date().toISOString(),
-        };
-
-        setOrders((prev) => [...prev, created]);
         });
+
         setOrders((prev) => [created, ...prev]);
       } else {
         if (!editingId) return;
@@ -132,20 +129,7 @@ export default function OrdersPage() {
           total_amount: Number(payload.total_amount),
           user_id: payload.user_id,
         });
-        setOrders((prev) =>
-          prev.map((o) =>
-            o.id === editingId
-              ? {
-                ...o,
-                status: updatePayload.status,
-                total_amount: String(updatePayload.total_amount),
-                invoice_file: updatePayload.invoice_file ?? null,
-                user_id: updatePayload.user_id,
-              }
-              : o
-          )
-          prev.map((o) => (o.id === editingId ? updated : o))
-        );
+        setOrders((prev) => prev.map((o) => (o.id === editingId ? updated : o)));
       }
 
       setOpen(false);
@@ -168,16 +152,7 @@ export default function OrdersPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div
-        style={{
-          display: "flex",
-          gap: 10,
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-        }}
-      >
-    <section className="adminPage">
+      <section className="adminPage">
       <h1 className="adminPageTitle">Commandes</h1>
 
       <div style={{ display: "flex", gap: 10, justifyContent: "space-between", flexWrap: "wrap" }}>
@@ -192,9 +167,6 @@ export default function OrdersPage() {
           + Nouvelle commande
         </button>
         <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={openCreate} style={{ padding: "10px 14px", borderRadius: 10 }}>
-            + Nouvelle commande
-          </button>
           <button onClick={fetchOrders} style={{ padding: "10px 14px", borderRadius: 10 }}>
             Actualiser
           </button>
@@ -346,6 +318,7 @@ export default function OrdersPage() {
           </div>
         </div>
       )}
+      </section>
     </div>
   );
 }
