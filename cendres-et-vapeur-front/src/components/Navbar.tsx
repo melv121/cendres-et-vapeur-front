@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { getUserCart } from '../api/api';
 import logo from '../assets/logo.png';
 import './Navbar.css';
 
@@ -14,36 +15,52 @@ interface User {
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [cartCount, setCartCount] = useState(0);
   const navigate = useNavigate();
 
+  const fetchCartCount = async (userId: number) => {
+    try {
+      const cart = await getUserCart(userId);
+      const count = (cart.items || []).reduce((sum: number, item: any) => sum + item.quantity, 0);
+      setCartCount(count);
+    } catch {
+      setCartCount(0);
+    }
+  };
+
   useEffect(() => {
-    // Vérifier si l'utilisateur est connecté
+    
     const checkUser = () => {
       const userStr = localStorage.getItem('cev_user');
       const token = localStorage.getItem('cev_auth_token');
-      
+
       if (userStr && token) {
         try {
-          setUser(JSON.parse(userStr));
+          const parsed = JSON.parse(userStr);
+          setUser(parsed);
+          fetchCartCount(parsed.id);
         } catch {
           setUser(null);
+          setCartCount(0);
         }
       } else {
         setUser(null);
+        setCartCount(0);
       }
     };
 
     checkUser();
-    
-    // Écouter les changements de localStorage
+
     window.addEventListener('storage', checkUser);
-    
-    // Écouter un événement custom pour les changements dans le même onglet
+
     window.addEventListener('userLoggedIn', checkUser);
-    
+
+    window.addEventListener('cartUpdated', checkUser);
+
     return () => {
       window.removeEventListener('storage', checkUser);
       window.removeEventListener('userLoggedIn', checkUser);
+      window.removeEventListener('cartUpdated', checkUser);
     };
   }, []);
 
@@ -91,7 +108,7 @@ const Navbar: React.FC = () => {
           </li>
           <li className="navbar-item navbar-cart">
             <Link to="/cart" className="navbar-link">
-              panier <span className="cart-count">0</span>
+              panier <span className="cart-count">{cartCount}</span>
             </Link>
           </li>
           

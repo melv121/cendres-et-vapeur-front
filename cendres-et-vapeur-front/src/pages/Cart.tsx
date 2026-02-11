@@ -1,9 +1,11 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { getUserCart, getProductById, updateCartItemQuantity, removeFromCart, emptyCart } from '../api/api';
 import '../styles/Cart.css';
 
 interface CartItem {
   id: number;
+  product_id: number;
   name: string;
   description: string;
   image: string;
@@ -14,58 +16,121 @@ interface CartItem {
 
 const Cart = () => {
   const navigate = useNavigate();
-  
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: 1,
-      name: 'Engrenage en Cuivre',
-      description: 'Mécanisme forgé à la main',
-      image: '',
-      price: 45,
-      quantity: 2,
-      stock: 12
-    },
-    {
-      id: 2,
-      name: 'Lampe à Vapeur',
-      description: 'Éclairage portable',
-      image: '',
-      price: 78,
-      quantity: 1,
-      stock: 8
-    },
-    {
-      id: 3,
-      name: 'Montre Mécanique',
-      description: 'Garde-temps restauré',
-      image: '',
-      price: 120,
-      quantity: 1,
-      stock: 5
+
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [orderId, setOrderId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const getUserId = (): number | null => {
+    const userStr = localStorage.getItem('cev_user');
+    if (!userStr) return null;
+    try {
+      const user = JSON.parse(userStr);
+      return user.id || null;
+    } catch {
+      return null;
     }
-  ]);
+  };
 
-  const updateQuantity = (id: number, delta: number) => {
-    setCartItems(items =>
-      items.map(item => {
-        if (item.id === id) {
-          const newQuantity = item.quantity + delta;
-          if (newQuantity >= 1 && newQuantity <= item.stock) {
-            return { ...item, quantity: newQuantity };
+  const userId = getUserId();
+
+  useEffect(() => {
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+    fetchCart();
+  }, []);
+
+  const fetchCart = async () => {
+    if (!userId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const cart = await getUserCart(userId);
+
+      setOrderId(cart.id);
+
+      // Pour chaque item du panier, ça récupère les infos du produit
+      const items: CartItem[] = await Promise.all(
+        (cart.items || []).map(async (item: any) => {
+          try {
+            const product = await getProductById(item.product_id);
+            return {
+              id: item.id,
+              product_id: item.product_id,
+              name: product.name || `Produit #${item.product_id}`,
+              description: product.description || '',
+              image: product.image_url || '',
+              price: Number(item.unit_price_frozen),
+              quantity: item.quantity,
+              stock: product.stock || 99,
+            };
+          } catch {
+            return {
+              id: item.id,
+              product_id: item.product_id,
+              name: `Produit #${item.product_id}`,
+              description: '',
+              image: '',
+              price: Number(item.unit_price_frozen),
+              quantity: item.quantity,
+              stock: 99,
+            };
           }
-        }
-        return item;
-      })
-    );
+        })
+      );
+
+      setCartItems(items);
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors du chargement du panier');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const removeItem = (id: number) => {
-    setCartItems(items => items.filter(item => item.id !== id));
+  const updateQuantity = async (id: number, delta: number) => {
+    const item = cartItems.find(i => i.id === id);
+    if (!item || !userId) return;
+
+    const newQuantity = item.quantity + delta;
+    if (newQuantity < 1 || newQuantity > item.stock) return;
+
+    try {
+      await updateCartItemQuantity(userId, item.product_id, newQuantity);
+      setCartItems(items =>
+        items.map(i => i.id === id ? { ...i, quantity: newQuantity } : i)
+      );
+      window.dispatchEvent(new Event('cartUpdated'));
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors de la mise à jour');
+    }
   };
 
-  const clearCart = () => {
-    if (window.confirm('Êtes-vous sûr de vouloir vider le panier ?')) {
+  const removeItem = async (id: number) => {
+    const item = cartItems.find(i => i.id === id);
+    if (!item || !userId) return;
+
+    try {
+      await removeFromCart(userId, item.product_id);
+      setCartItems(items => items.filter(i => i.id !== id));
+      window.dispatchEvent(new Event('cartUpdated'));
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors de la suppression');
+    }
+  };
+
+  const clearCart = async () => {
+    if (!userId) return;
+    if (!window.confirm('Êtes-vous sûr de vouloir vider le panier ?')) return;
+
+    try {
+      await emptyCart(userId);
       setCartItems([]);
+      window.dispatchEvent(new Event('cartUpdated'));
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors du vidage du panier');
     }
   };
 
@@ -91,6 +156,50 @@ const Cart = () => {
     }
     alert('Redirection vers le paiement...');
   };
+
+  if (!userId) {
+    return (
+      <div className="cart-page">
+        <div className="container">
+          <div className="empty-cart">
+            <h2>Connexion requise</h2>
+            <p>Vous devez être connecté pour accéder à votre panier.</p>
+            <Link to="/login" className="btn-primary">
+              Se connecter
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="cart-page">
+        <div className="container">
+          <div className="empty-cart">
+            <p>Chargement du panier…</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="cart-page">
+        <div className="container">
+          <div className="empty-cart">
+            <h2>Erreur</h2>
+            <p>{error}</p>
+            <button onClick={fetchCart} className="btn-primary">
+              Réessayer
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (cartItems.length === 0) {
     return (

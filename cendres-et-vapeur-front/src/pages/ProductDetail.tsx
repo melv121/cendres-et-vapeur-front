@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { Product } from '../types/Product';
 import { productService } from '../services/productService';
+import { addToCart } from '../api/api';
 import '../styles/ProductDetail.css';
 
 const ProductDetail = () => {
@@ -37,10 +38,22 @@ const ProductDetail = () => {
     }
   };
 
-  const handleAddToCart = () => {
-    console.log(`Ajout au panier: ${quantity}x ${product?.name}`);
-    setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 2000);
+  const handleAddToCart = async () => {
+    const userStr = localStorage.getItem('cev_user');
+    const token = localStorage.getItem('cev_auth_token');
+    if (!userStr || !token) {
+      navigate('/login');
+      return;
+    }
+    try {
+      const user = JSON.parse(userStr);
+      await addToCart(user.id, product!.id, quantity);
+      window.dispatchEvent(new Event('cartUpdated'));
+      setAddedToCart(true);
+      setTimeout(() => setAddedToCart(false), 2000);
+    } catch (err: any) {
+      alert(err.message || 'Erreur lors de l\'ajout au panier');
+    }
   };
 
   const getStockStatus = (stock: number) => {
