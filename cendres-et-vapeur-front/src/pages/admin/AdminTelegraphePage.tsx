@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import "./pagestyle/adminTelegraphe.css";
-import { API_BASE_URL } from "../../api/api";
+import { API_BASE_URL, Getbroadcast, sendChatMessage, getChatMessages } from "../../api/api";
 
 type Role = "ADMIN" | "EDITOR";
 type Sender = "me" | "other" | "system";
@@ -29,6 +29,10 @@ export default function AdminTelegraphePage() {
   const wsRef = useRef<WebSocket | null>(null);
   const [wsConnected, setWsConnected] = useState(false);
 
+  const userStr = localStorage.getItem('cev_auth_user');
+  const clientId = userStr ? JSON.parse(userStr).id || 0 : 0;
+  const username = userStr ? JSON.parse(userStr).name || 'User' : 'Guest';
+
   const listRef = useRef<HTMLDivElement | null>(null);
 
   const filteredUsers = useMemo(() => {
@@ -56,21 +60,21 @@ export default function AdminTelegraphePage() {
       }
     } catch {}
 
-    // prefer explicit env API_BASE_URL if set
-    let base = 'ws://89.168.38.93'; // direct WS to backend
-    if (API_BASE_URL) {
-      // if API_BASE_URL set, use it for WS
-      base = API_BASE_URL.replace(/^https?/, 'ws');
+    let base;
+    if (import.meta.env.DEV) {
+      base = 'ws://localhost:5173';
+    } else {
+      base = API_BASE_URL ? API_BASE_URL.replace(/^https?/, 'ws') : 'ws://89.168.38.93';
     }
 
     const wsProto = base.startsWith('wss') ? 'wss' : 'ws';
     const host = base.replace(/^wss?:\/\//, '').replace(/\/$/, '');
-    return `${wsProto}://${host}/chat/ws`;
+    return `${wsProto}://${host}/mail/ws?client_id=${encodeURIComponent(clientId)}&username=${encodeURIComponent(username)}`;
   }
 
   async function fetchOnlineUsers() {
     try {
-      const base = 'http://89.168.38.93'; 
+      const base = API_BASE_URL || 'http://89.168.38.93'; 
       const res = await fetch(`${base}/chat/users`);
       if (!res.ok) return;
       const data = await res.json();
@@ -98,7 +102,7 @@ export default function AdminTelegraphePage() {
       ws.onopen = () => {
         console.log('WS connected');
         setWsConnected(true);
-        // announce presence - no join
+        try { ws.send(JSON.stringify({ type: 'join' })); } catch {}
         fetchOnlineUsers();
       };
 
@@ -108,7 +112,7 @@ export default function AdminTelegraphePage() {
           const data = JSON.parse(ev.data);
           if (data.type === 'message') {
             const isMe = data.user_id === Number(localStorage.getItem('cev_auth_user') ? JSON.parse(String(localStorage.getItem('cev_auth_user'))).id : 0);
-            if (isMe) return; // skip own messages received back
+            if (isMe) return; 
             setMessages((p) => [...p, {
               id: uid(), sender: isMe ? 'me' : 'other',
               author: data.username || 'Anonyme',
@@ -123,6 +127,15 @@ export default function AdminTelegraphePage() {
               time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
             };
             setMessages((p) => [...p, sysMsg]);
+          } else if (typeof data === 'string') {
+            // Handle raw string messages (fallback for backend sending plain text)
+            setMessages((p) => [...p, {
+              id: uid(), sender: 'other',
+              author: 'Anonyme',
+              role: undefined,
+              content: data,
+              time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+            }] );
           }
         } catch (e) {
           setMessages((p) => [...p, { id: uid(), sender: 'other', author: 'Serveur', content: String(ev.data), time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) }]);
@@ -154,34 +167,26 @@ export default function AdminTelegraphePage() {
     setTransport((t) => (t === "WebSocket" ? "Long Polling" : "WebSocket"));
   }
 
-  function sendMessage() {
+  async function sendMessage() {
     const text = draft.trim();
     if (!text) return;
 
-    const msg: ChatMessage = {
-      id: uid(),
-      sender: "me",
-      author: "Moi",
-      role: "ADMIN", // assuming admin
-      content: text,
-      time: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
-    };
-
-    setMessages((prev) => [...prev, msg]);
-    setDraft("");
-    // send via websocket if available
     try {
-      const ws = wsRef.current;
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        const wsMsg = { message: text, user_id: clientId, username };
-        console.log('Sending WS message:', wsMsg);
-        ws.send(JSON.stringify(wsMsg));
-      } else {
-        console.log('WS not open, readyState:', ws ? ws.readyState : 'no ws');
-      }
+      await sendChatMessage(text, clientId);
+      // add locally
+      const msg: ChatMessage = {
+        id: uid(),
+        sender: "me",
+        author: "Moi",
+        role: "ADMIN",
+        content: text,
+        time: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
+      };
+      setMessages((prev) => [...prev, msg]);
     } catch (e) {
-      // ignore send errors
+      console.error('Failed to send message', e);
     }
+    setDraft("");
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {

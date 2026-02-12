@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+const API_BASE_URL = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || '');
 
 const getHeaders = (): HeadersInit => {
   const headers: HeadersInit = {
@@ -181,8 +181,37 @@ const Purchase = async (id: number) => {
   return response.json();
 };
 
+const Getbroadcast = async () => { 
+const response = await fetch(`${API_BASE_URL}/chat/users`, { 
+headers: getHeaders(), }); 
+return response.json(); };
 
-// ============ ORDERS ============
+const sendChatMessage = async (message: string, excludeId: number) => {
+  const response = await fetch(`${API_BASE_URL}/mail/broadcast`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ message, exclude_client_id: excludeId }),
+  });
+  console.log('sendChatMessage response status:', response.status);
+  return response.json();
+};
+
+const getChatMessages = async () => {
+  const response = await fetch(`${API_BASE_URL}/chat/users`, {
+    headers: getHeaders(),
+  });
+  console.log('getChatMessages response status:', response.status);
+  return response.json();
+};
+
+const getWsStatus = async (clientId: string) => {
+  const response = await fetch(`${API_BASE_URL}/mail/ws/${clientId}`, {
+    headers: getHeaders(),
+  });
+  return response.json();
+}; 
+
+
 
 const getOrders = async () => {
   const response = await fetch(`${API_BASE_URL}/orders`, {
@@ -675,6 +704,11 @@ export {
   login,
   verify2FA,
   register,
+  // Chat
+  Getbroadcast,
+  sendChatMessage,
+  getChatMessages,
+  getWsStatus,
 };
 
 

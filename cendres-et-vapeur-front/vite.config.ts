@@ -40,6 +40,11 @@ export default defineConfig({
       '/orders': proxyConfig(),
       '/users': proxyConfig(),
       '/categories': proxyConfig(),
+      '/mail': {
+        target: 'ws://89.168.38.93',
+        ws: true,
+        changeOrigin: true,
+      },
       '/chat': {
         target: 'ws://89.168.38.93',
         ws: true,
