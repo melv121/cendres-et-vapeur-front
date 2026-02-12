@@ -25,8 +25,6 @@ import NotAuthorized from "./pages/NotAuthorized";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import { useToxicityMonitor } from "./hooks/useToxicityMonitor";
 
-import { useToxicityMonitor } from "./hooks/useToxicityMonitor";
-
 // Composants admin directs (avec API)
 import AdminProducts from "./components/admin/AdminProduct";
 import AdminUsers from "./components/admin/AdminUsers";
