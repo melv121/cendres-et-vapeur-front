@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { Product } from '../types/Product';
 import { productService } from '../services/productService';
-import { addToCart, getProductVotes, voteProduct } from '../api/api';
+import { getShopProductById } from '../services/productShop';
+import { addToCart } from '../api/api';
 import '../styles/ProductDetail.css';
 
 interface Comment {
@@ -37,11 +38,13 @@ const ProductDetail = () => {
 
     try {
       setLoading(true);
-      const data = await productService.getProductById(parseInt(id));
-      setProduct(data);
-      await loadComments();
+      console.log('Loading product with id:', id);
+      const data = await getShopProductById(parseInt(id));
+      console.log('Fetched product data:', data);
+      setProduct(data || null);
     } catch (error) {
       console.error('Erreur lors du chargement du produit:', error);
+      setProduct(null);
     } finally {
       setLoading(false);
     }
@@ -235,7 +238,7 @@ const ProductDetail = () => {
 
         <div className="product-detail-container">
           <div className="product-image-section">
-            {product.image ? (
+            {product.image && product.image.trim() ? (
               <img src={product.image} alt={product.name} className="product-image-large" />
             ) : (
               <div className="image-placeholder-large">
