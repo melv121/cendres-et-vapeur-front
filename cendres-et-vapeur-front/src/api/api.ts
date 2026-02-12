@@ -90,7 +90,7 @@ const getProducts = async () => {
 };
 
 const getProductById = async (id: number) => {
-  const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/product/${id}`, {
     headers: getHeaders(),
 
   });

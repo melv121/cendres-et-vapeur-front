@@ -32,6 +32,7 @@ export default defineConfig({
       '/colony-events/toxicity/status': proxyConfig(),
       '/api': proxyConfig(),
       '/products': proxyConfig(),
+      '/product': proxyConfig(),
       '/logs': proxyConfig(),
       '/stats': proxyConfig(),
       '/admin/stats': proxyConfig(),
@@ -39,6 +40,11 @@ export default defineConfig({
       '/orders': proxyConfig(),
       '/users': proxyConfig(),
       '/categories': proxyConfig(),
+      '/chat': {
+        target: 'ws://89.168.38.93',
+        ws: true,
+        changeOrigin: true,
+      },
     },
   },
 })

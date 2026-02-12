@@ -14,39 +14,6 @@ type ChatMessage = {
   time: string;
 };
 
-const seedUsers = [
-  { name: "Valdr", role: "EDITOR" as Role },
-  { name: "Shaima", role: "EDITOR" as Role },
-  { name: "Nox", role: "ADMIN" as Role },
-  { name: "Mouna", role: "EDITOR" as Role },
-];
-
-const seedMessages: ChatMessage[] = [
-  {
-    id: "sys-1",
-    sender: "system",
-    author: "Système",
-    content: "Canal sécurisé — réservé aux Administrateurs & Éditeurs.",
-    time: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
-  },
-  {
-    id: "m-1",
-    sender: "other",
-    author: "Valdr",
-    role: "EDITOR",
-    content: "Restez discrets. Le télégraphe est ouvert.",
-    time: new Date(Date.now() - 1000 * 60 * 8).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
-  },
-  {
-    id: "m-2",
-    sender: "me",
-    author: "Moi",
-    role: "ADMIN",
-    content: "Bien reçu. Je prépare les stats et le journal.",
-    time: new Date(Date.now() - 1000 * 60 * 6).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
-  },
-];
-
 function uid() {
   return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
 }
@@ -57,7 +24,7 @@ export default function AdminTelegraphePage() {
 
   const [query, setQuery] = useState("");
   const [draft, setDraft] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>(seedMessages);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<{ user_id?: number; username: string }[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
   const [wsConnected, setWsConnected] = useState(false);
@@ -65,10 +32,11 @@ export default function AdminTelegraphePage() {
   const listRef = useRef<HTMLDivElement | null>(null);
 
   const filteredUsers = useMemo(() => {
+    const users = onlineUsers.map(u => ({ name: u.username, role: 'ADMIN' as Role }));
     const q = query.trim().toLowerCase();
-    if (!q) return seedUsers;
-    return seedUsers.filter((u) => u.name.toLowerCase().includes(q) || u.role.toLowerCase().includes(q));
-  }, [query]);
+    if (!q) return users;
+    return users.filter((u) => u.name.toLowerCase().includes(q) || u.role.toLowerCase().includes(q));
+  }, [query, onlineUsers]);
 
   // scroll 
   useEffect(() => {
@@ -89,21 +57,21 @@ export default function AdminTelegraphePage() {
     } catch {}
 
     // prefer explicit env API_BASE_URL if set
-    let base = API_BASE_URL || '';
-    if (!base) {
-      // fallback to same host on port 8000
-      base = `${location.protocol === 'https:' ? 'https' : 'http'}://${location.hostname}:8000`;
+    let base = 'ws://89.168.38.93'; // direct WS to backend
+    if (API_BASE_URL) {
+      // if API_BASE_URL set, use it for WS
+      base = API_BASE_URL.replace(/^https?/, 'ws');
     }
 
-    const wsProto = base.startsWith('https') ? 'wss' : 'ws';
-    const host = base.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    const wsProto = base.startsWith('wss') ? 'wss' : 'ws';
+    const host = base.replace(/^wss?:\/\//, '').replace(/\/$/, '');
     return `${wsProto}://${host}/chat/ws?client_id=${encodeURIComponent(clientId)}&username=${encodeURIComponent(username)}`;
   }
 
   async function fetchOnlineUsers() {
     try {
-      const base = API_BASE_URL || `${location.protocol === 'https:' ? 'https' : 'http'}://${location.hostname}:8000`;
-      const res = await fetch(`${base.replace(/\/$/, '')}/chat/users`);
+      const base = 'http://89.168.38.93'; // direct to backend
+      const res = await fetch(`${base}/chat/users`);
       if (!res.ok) return;
       const data = await res.json();
       // expect { online_users: [...], count: n }
@@ -131,6 +99,7 @@ export default function AdminTelegraphePage() {
       wsRef.current = ws;
 
       ws.onopen = () => {
+        console.log('WS connected');
         setWsConnected(true);
         // announce presence
         try { ws.send(JSON.stringify({ type: 'join' })); } catch {}
@@ -138,6 +107,7 @@ export default function AdminTelegraphePage() {
       };
 
       ws.onmessage = (ev) => {
+        console.log('WS message:', ev.data);
         try {
           const data = JSON.parse(ev.data);
           if (data.type === 'message') {
@@ -158,7 +128,6 @@ export default function AdminTelegraphePage() {
             setMessages((p) => [...p, sysMsg]);
           }
         } catch (e) {
-          // if server sends plain text, push as message
           setMessages((p) => [...p, { id: uid(), sender: 'other', author: 'Serveur', content: String(ev.data), time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) }]);
         }
       };
@@ -177,7 +146,6 @@ export default function AdminTelegraphePage() {
     };
   }, [connected, transport]);
 
-  // keep online users refreshed periodically
   useEffect(() => {
     fetchOnlineUsers();
     const id = setInterval(fetchOnlineUsers, 15_000);
@@ -208,22 +176,10 @@ export default function AdminTelegraphePage() {
     try {
       const ws = wsRef.current;
       if (ws && ws.readyState === WebSocket.OPEN) {
+        console.log('Sending WS message:', text);
         ws.send(text);
       } else {
-        // fallback fake response for demo/offline
-        setTimeout(() => {
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: uid(),
-              sender: "other",
-              author: "Valdr",
-              role: "EDITOR",
-              content: "Reçu. Continue. 🕯️",
-              time: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
-            },
-          ]);
-        }, 700);
+        console.log('WS not open');
       }
     } catch (e) {
       // ignore send errors
@@ -283,7 +239,7 @@ export default function AdminTelegraphePage() {
             <div className="teleHeaderLeft">
               <div className="roomTitle">télégraphe</div>
               <div className="roomSub">
-                Messages instantanés • réservé • {connected ? "actif" : "pause"}
+                Messages instantanés • réservé • {wsConnected ? "connecté" : connected ? "actif" : "pause"}
               </div>
             </div>
 
@@ -333,7 +289,7 @@ export default function AdminTelegraphePage() {
               />
               <div className="composerActions">
                 <div className="composerNote">
-                  {connected ? "Instantané (mock)" : "Hors ligne — brouillon"}
+                  {connected ? "Instantané" : "Hors ligne — brouillon"}
                 </div>
                 <button className="sendBtn" onClick={sendMessage} aria-label="Envoyer le message">
                   Envoyer
