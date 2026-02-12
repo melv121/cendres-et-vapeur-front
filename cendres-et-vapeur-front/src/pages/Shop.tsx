@@ -5,6 +5,11 @@ import { getAllShopProducts } from '../services/productShop';
 import { addToCart } from '../api/api';
 import '../styles/Shop.css';
 
+function formatEUR(n: number | undefined | null) {
+  const value = Number(n || 0);
+  return value.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
+}
+
 const Shop = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -127,7 +132,7 @@ const Shop = () => {
                       <p className="product-description">{product.description}</p>
 
                       <div className="price-section">
-                        <div className="product-price">{product.current_price} €</div>
+                        <div className="product-price">{formatEUR(product.current_price || product.base_price)}</div>
                         <div className="product-popularity">
                           {product.popularity_score}
                         </div>
