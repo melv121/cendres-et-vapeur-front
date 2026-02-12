@@ -16,7 +16,6 @@ export default function TelegraphChat() {
   const endRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    // Simulation connexion WS
     const t = setTimeout(() => {
       setOnline(true);
       setMsgs((m) => [
@@ -37,11 +36,9 @@ export default function TelegraphChat() {
     const clean = text.trim();
     if (!clean) return;
 
-    // Message user
     setMsgs((m) => [...m, { id: crypto.randomUUID(), text: clean, from: "me", at: Date.now() }]);
     setText("");
 
-    // Réponse automatique (simulation serveur)
     setTimeout(() => {
       setMsgs((m) => [
         ...m,

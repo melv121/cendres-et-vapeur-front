@@ -53,7 +53,6 @@ const ProductDetail = () => {
       const response = await getProductVotes(parseInt(id));
       console.log('Réponse brute de l\'API:', response);
 
-      // Chercher le tableau de votes dans la réponse
       let votes = [];
       if (Array.isArray(response)) {
         votes = response;
@@ -65,19 +64,14 @@ const ProductDetail = () => {
         votes = response.items;
       }
 
-      console.log('Votes trouvés:', votes);
-      console.log('Nombre de votes:', votes.length);
-
       const filteredVotes = votes.filter((vote: any) => {
         const hasComment = vote.comment && typeof vote.comment === 'string' && vote.comment.trim() !== '';
         console.log('Vote:', vote, 'Has comment:', hasComment);
         return hasComment;
       });
 
-      console.log('Votes filtrés (avec commentaires):', filteredVotes);
       setComments(filteredVotes);
     } catch (error) {
-      console.error('Erreur lors du chargement des commentaires:', error);
       setComments([]);
     }
   };
@@ -87,7 +81,6 @@ const ProductDetail = () => {
     try {
       const response = await getProductVotes(parseInt(id));
 
-      // Chercher le tableau de votes dans la réponse
       let votes = [];
       if (Array.isArray(response)) {
         votes = response;
@@ -99,11 +92,9 @@ const ProductDetail = () => {
         votes = response.items;
       }
 
-      // Compter les likes totals
       const totalLikes = votes.filter((vote: any) => vote.like === true).length;
       setLikes(totalLikes);
 
-      // Vérifier si l'utilisateur actuel a liké
       const userStr = localStorage.getItem('cev_auth_user');
       if (userStr) {
         try {
@@ -139,7 +130,6 @@ const ProductDetail = () => {
       await voteProduct(product!.id, likePayload);
       setIsLiked(!isLiked);
       setLikes(isLiked ? likes - 1 : likes + 1);
-      // Ne pas recharger les commentaires pour ne pas perdre les commentaires avec contenu
     } catch (error) {
       console.error('Erreur lors du like:', error);
     }
@@ -160,20 +150,17 @@ const ProductDetail = () => {
 
     try {
       const user = JSON.parse(userStr);
-      // Structure exacte attendue par l'API
-      // Conserver l'état du like actuel
       const commentPayload = {
         user_id: user.id,
         note: rating,
         comment: newComment,
-        like: isLiked, // Garder le state du like existant
+        like: isLiked,
       };
-      console.log('Envoi du commentaire:', commentPayload);
       await voteProduct(product.id, commentPayload);
       setNewComment('');
       setRating(5);
       await loadComments();
-      await loadLikes(); // Recharger les likes aussi pour maintenir l'état
+      await loadLikes();
     } catch (error) {
       console.error('Erreur lors de l\'ajout du commentaire:', error);
       alert('Erreur lors de l\'ajout du commentaire: ' + (error as any).message);

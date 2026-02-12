@@ -1,7 +1,5 @@
-// Types pour l'administration - Réexport depuis les types principaux
 export type { Product, User, Order, OrderItem, Category, Vote, ShiftNote, ColonyEvent } from '../../types/Product';
 
-// Types spécifiques à l'admin
 export interface AdminProduct {
   id: number;
   name: string;
@@ -55,7 +53,6 @@ export interface DashboardStats {
   };
 }
 
-// Types pour les formulaires
 export interface ProductFormData {
   name: string;
   description: string;
@@ -73,7 +70,6 @@ export interface UserFormData {
   password?: string;
 }
 
-// Types pour les filtres
 export interface ProductFilters {
   search?: string;
   category_id?: number;

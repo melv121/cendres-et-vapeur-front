@@ -56,7 +56,6 @@ const Cart = () => {
 
       setOrderId(cart.id);
 
-      // Pour chaque item du panier, ça récupère les infos du produit
       const items: CartItem[] = await Promise.all(
         (cart.items || []).map(async (item: any) => {
           try {
