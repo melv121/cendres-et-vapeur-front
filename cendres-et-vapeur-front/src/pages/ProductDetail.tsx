@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import type { Product } from '../types/Product';
 import { productService } from '../services/productService';
 import { getShopProductById } from '../services/productShop';
-import { addToCart } from '../api/api';
+import { addToCart, voteProduct, getProductVotes } from '../api/api';
 import '../styles/ProductDetail.css';
 
 interface Comment {
@@ -31,6 +31,7 @@ const ProductDetail = () => {
   useEffect(() => {
     loadProduct();
     loadLikes();
+    loadComments();
   }, [id]);
 
   const loadProduct = async () => {
@@ -41,6 +42,9 @@ const ProductDetail = () => {
       console.log('Loading product with id:', id);
       const data = await getShopProductById(parseInt(id));
       console.log('Fetched product data:', data);
+      if (!data) {
+        console.error('Produit vide retourné par getShopProductById');
+      }
       setProduct(data || null);
     } catch (error) {
       console.error('Erreur lors du chargement du produit:', error);

@@ -174,10 +174,12 @@ const Purchase = async (id: number) => {
   return response.json();
 };
 
-const Getbroadcast = async () => { 
-const response = await fetch(`${API_BASE_URL}/chat/users`, { 
-headers: getHeaders(), }); 
-return response.json(); };
+const Getbroadcast = async () => {
+  const response = await fetch(`${API_BASE_URL}/chat/users`, {
+    headers: getHeaders(),
+  });
+  return response.json();
+};
 
 const sendChatMessage = async (message: string, excludeId: number) => {
   const response = await fetch(`${API_BASE_URL}/mail/broadcast`, {
@@ -202,7 +204,7 @@ const getWsStatus = async (clientId: string) => {
     headers: getHeaders(),
   });
   return response.json();
-}; 
+};
 
 
 
@@ -439,7 +441,7 @@ export const updateShiftNotes = async (id: number, data: any) => {
 export const createShiftNote = async (data: any) => {
   const url = `${API_BASE_URL}/shift-notes/`;
   if (import.meta.env.VITE_DEBUG) {
-    try { console.debug('[api] createShiftNote ->', url, { method: 'POST', credentials: 'include' }); } catch {}
+    try { console.debug('[api] createShiftNote ->', url, { method: 'POST', credentials: 'include' }); } catch { }
   }
   const response = await fetch(url, {
     method: 'POST',
@@ -559,6 +561,10 @@ export const getProductVotes = async (id: number) => {
     credentials: 'include',
     headers: getHeaders(),
   });
+  if (!response.ok) {
+    console.warn(`Erreur API getProductVotes: ${response.status}`);
+    return []; // Retourner un tableau vide si pas de votes
+  }
   return response.json();
 };
 

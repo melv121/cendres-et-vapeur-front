@@ -18,6 +18,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 const STORAGE_KEY = 'cev_auth_token'
 const USER_STORAGE_KEY = 'cev_auth_user'
 
+// Normaliser le rôle en majuscules
+const normalizeRole = (role: string | undefined): 'USER' | 'ADMIN' | 'EDITOR' => {
+  if (!role) return 'USER'
+  const normalized = role.toUpperCase()
+  if (normalized === 'ADMIN' || normalized === 'EDITOR') {
+    return normalized as 'ADMIN' | 'EDITOR'
+  }
+  return 'USER'
+}
+
 function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null)
@@ -26,11 +36,16 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const storedToken = localStorage.getItem(STORAGE_KEY)
     const storedUser = localStorage.getItem(USER_STORAGE_KEY)
-    
+
     if (storedToken && storedUser) {
       setToken(storedToken)
       try {
-        setUser(JSON.parse(storedUser))
+        const parsedUser = JSON.parse(storedUser)
+        // Normaliser le rôle en majuscules
+        if (parsedUser.role) {
+          parsedUser.role = normalizeRole(parsedUser.role)
+        }
+        setUser(parsedUser)
       } catch (e) {
         console.error('Failed to parse stored user:', e)
       }
@@ -42,11 +57,16 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     const handleUserLoggedIn = () => {
       const storedToken = localStorage.getItem(STORAGE_KEY)
       const storedUser = localStorage.getItem(USER_STORAGE_KEY)
-      
+
       if (storedToken && storedUser) {
         setToken(storedToken)
         try {
-          setUser(JSON.parse(storedUser))
+          const parsedUser = JSON.parse(storedUser)
+          // Normaliser le rôle en majuscules
+          if (parsedUser.role) {
+            parsedUser.role = normalizeRole(parsedUser.role)
+          }
+          setUser(parsedUser)
         } catch (e) {
           console.error('Failed to parse stored user:', e)
         }
@@ -54,7 +74,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     window.addEventListener('userLoggedIn', handleUserLoggedIn)
-    
+
     return () => {
       window.removeEventListener('userLoggedIn', handleUserLoggedIn)
     }
@@ -63,7 +83,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string): Promise<{ success: boolean; message: string; user_id?: number }> => {
     try {
       const response = await api.login(email, password)
-      
+
       if (response.success) {
         return {
           success: true,
@@ -82,20 +102,20 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
   const verify2fa = async (userId: number, code: string): Promise<void> => {
     try {
       const response = await api.verify2FA(userId, code)
-      
+
       if (response.success && response.token) {
         setToken(response.token)
         localStorage.setItem(STORAGE_KEY, response.token)
-        
+
         const userData: User = {
           id: response.user?.id,
           username: response.user?.username,
           email: response.user?.email,
-          role: response.user?.role || 'USER',
+          role: normalizeRole(response.user?.role),
           avatar_url: response.user?.avatar_url,
           biography: response.user?.biography,
         }
-        
+
         setUser(userData)
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData))
       } else {
@@ -110,17 +130,17 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (username: string, email: string, password: string): Promise<void> => {
     try {
       const response = await api.register(username, email, password)
-      
+
       if (response.success) {
         const userData: User = {
           id: response.user?.id,
           username: response.user?.username,
           email: response.user?.email,
-          role: response.user?.role || 'USER',
+          role: normalizeRole(response.user?.role),
           avatar_url: response.user?.avatar_url,
           biography: response.user?.biography,
         }
-        
+
         setUser(userData)
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData))
       } else {
