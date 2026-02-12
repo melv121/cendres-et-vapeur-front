@@ -120,7 +120,6 @@ export default function OrdersPage() {
           total_amount: Number(payload.total_amount),
           user_id: payload.user_id,
         });
-
         setOrders((prev) => [created, ...prev]);
       } else {
         if (!editingId) return;
@@ -129,7 +128,9 @@ export default function OrdersPage() {
           total_amount: Number(payload.total_amount),
           user_id: payload.user_id,
         });
-        setOrders((prev) => prev.map((o) => (o.id === editingId ? updated : o)));
+        setOrders((prev) =>
+          prev.map((o) => (o.id === editingId ? updated : o))
+        );
       }
 
       setOpen(false);
@@ -151,8 +152,7 @@ export default function OrdersPage() {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <section className="adminPage">
+    <section className="adminPage">
       <h1 className="adminPageTitle">Commandes</h1>
 
       <div style={{ display: "flex", gap: 10, justifyContent: "space-between", flexWrap: "wrap" }}>
@@ -160,13 +160,12 @@ export default function OrdersPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Rechercher (id, statut, user_id, total)…"
-          style={{ padding: 10, borderRadius: 10, minWidth: 260, backgroundColor: "rgba(26,20,16,.8)", color: "#e8dcc8", border: "1px solid rgba(184, 115, 51, 0.3)" }}
+          style={{ padding: 10, borderRadius: 10, minWidth: 280 }}
         />
-
-        <button onClick={openCreate} style={{ padding: "10px 14px", borderRadius: 10, backgroundColor: "#8b5a2b", color: "#e8dcc8", border: "1px solid #b87333" }}>
-          + Nouvelle commande
-        </button>
         <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={openCreate} style={{ padding: "10px 14px", borderRadius: 10 }}>
+            + Nouvelle commande
+          </button>
           <button onClick={fetchOrders} style={{ padding: "10px 14px", borderRadius: 10 }}>
             Actualiser
           </button>
@@ -175,7 +174,7 @@ export default function OrdersPage() {
 
       {error && (
         <div style={{ padding: 10, borderRadius: 10, border: "1px solid rgba(255,0,0,.3)" }}>
-          {String(error)}
+          {error}
         </div>
       )}
 
@@ -186,44 +185,29 @@ export default function OrdersPage() {
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr style={{ textAlign: "left", backgroundColor: "rgba(184, 115, 51, 0.1)" }}>
-              <th style={{ padding: 10, color: "#d4955f", fontWeight: 800 }}>ID</th>
-              <th style={{ padding: 10, color: "#d4955f", fontWeight: 800 }}>Statut</th>
-              <th style={{ padding: 10, color: "#d4955f", fontWeight: 800 }}>Total</th>
-              <th style={{ padding: 10, color: "#d4955f", fontWeight: 800 }}>User</th>
-              <th style={{ padding: 10, color: "#d4955f", fontWeight: 800 }}>Créée</th>
-              <th style={{ padding: 10, color: "#d4955f", fontWeight: 800 }}>Actions</th>
+            <tr style={{ textAlign: "left" }}>
+              <th style={{ padding: 10 }}>ID</th>
+              <th style={{ padding: 10 }}>Statut</th>
+              <th style={{ padding: 10 }}>Total</th>
+              <th style={{ padding: 10 }}>User</th>
+              <th style={{ padding: 10 }}>Créée</th>
+              <th style={{ padding: 10 }}>Actions</th>
             </tr>
           </thead>
 
           <tbody>
             {filtered.map((o) => (
               <tr key={o.id} style={{ borderTop: "1px solid rgba(255,255,255,.12)" }}>
-                <td style={{ padding: 10, color: "#e8dcc8" }}>{o.id}</td>
-                <td style={{ padding: 10, color: "#e8dcc8" }}>
-                  <span
-                    style={{
-                      padding: "6px 10px",
-                      borderRadius: 999,
-                      border: "1px solid rgba(255,255,255,.18)",
-                      background: "rgba(255,255,255,.06)",
-                      fontWeight: 800,
-                      textTransform: "uppercase",
-                      fontSize: 12,
-                      letterSpacing: ".08em",
-                    }}
-                  >
-                    {o.status}
-                  </span>
-                </td>
-                <td style={{ padding: 10, fontWeight: 800, color: "#e8dcc8" }}>{o.total_amount}</td>
-                <td style={{ padding: 10, color: "#e8dcc8" }}>User #{o.user_id}</td>
-                <td style={{ padding: 10, opacity: 0.8, fontSize: 13, color: "#e8dcc8" }}>{formatDate(o.created_at)}</td>
+                <td style={{ padding: 10 }}>#{o.id}</td>
+                <td style={{ padding: 10 }}>{o.status}</td>
+                <td style={{ padding: 10 }}>{o.total_amount}</td>
+                <td style={{ padding: 10 }}>{o.user_id}</td>
+                <td style={{ padding: 10 }}>{formatDate(o.created_at)}</td>
                 <td style={{ padding: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <button onClick={() => openEdit(o)} style={{ padding: "8px 10px", borderRadius: 10, backgroundColor: "#8b5a2b", color: "#e8dcc8", border: "1px solid #b87333" }}>
+                  <button onClick={() => openEdit(o)} style={{ padding: "8px 10px", borderRadius: 10 }}>
                     Modifier
                   </button>
-                  <button onClick={() => onDelete(o.id)} style={{ padding: "8px 10px", borderRadius: 10, backgroundColor: "#8b5a2b", color: "#e8dcc8", border: "1px solid #b87333" }}>
+                  <button onClick={() => onDelete(o.id)} style={{ padding: "8px 10px", borderRadius: 10 }}>
                     Supprimer
                   </button>
                 </td>
@@ -241,85 +225,50 @@ export default function OrdersPage() {
         </table>
       </div>
 
-      {/* Modal */}
       {open && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,.55)",
-            display: "grid",
-            placeItems: "center",
-            zIndex: 2000,
-            padding: 16,
-          }}
-          onClick={() => setOpen(false)}
-        >
-          <div
-            style={{
-              width: "min(720px, 100%)",
-              borderRadius: 16,
-              padding: 16,
-              background: "rgba(26,20,16,.98)",
-              border: "1px solid rgba(255,255,255,.12)",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 style={{ marginTop: 0 }}>
-              {mode === "create" ? "Créer une commande" : "Modifier la commande"}
-            </h2>
+        <Modal onClose={() => setOpen(false)} title={mode === "create" ? "Créer une commande" : "Modifier la commande"}>
+          <div style={{ display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr" }}>
+            <input
+              value={form.status}
+              onChange={(e) => setForm((p) => ({ ...p, status: e.target.value }))}
+              placeholder="Statut (pending/paid/...)"
+              style={{ padding: 10, borderRadius: 10 }}
+            />
 
-            <div style={{ display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr" }}>
-              <select
-                value={form.status}
-                onChange={(e) => setForm((p) => ({ ...p, status: e.target.value }))}
-                style={{ padding: 10, borderRadius: 10, backgroundColor: "rgba(26,20,16,.8)", color: "#e8dcc8", border: "1px solid rgba(184, 115, 51, 0.3)" }}
-              >
-                <option value="">-- Sélectionner un statut --</option>
-                <option value="pending">Pending</option>
-                <option value="paid">Paid</option>
-                <option value="shipped">Shipped</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
+            <input
+              value={String(form.total_amount)}
+              onChange={(e) => setForm((p) => ({ ...p, total_amount: e.target.value }))}
+              placeholder="Total"
+              style={{ padding: 10, borderRadius: 10 }}
+            />
 
-              <input
-                value={String(form.total_amount)}
-                onChange={(e) => setForm((p) => ({ ...p, total_amount: e.target.value }))}
-                placeholder="Total"
-                type="number"
-                step="0.01"
-                style={{ padding: 10, borderRadius: 10, backgroundColor: "rgba(26,20,16,.8)", color: "#e8dcc8", border: "1px solid rgba(184, 115, 51, 0.3)" }}
-              />
+            <input
+              value={form.user_id}
+              onChange={(e) => setForm((p) => ({ ...p, user_id: Number(e.target.value) }))}
+              placeholder="user_id"
+              type="number"
+              style={{ padding: 10, borderRadius: 10 }}
+            />
 
-              <input
-                value={form.user_id}
-                onChange={(e) => setForm((p) => ({ ...p, user_id: Number(e.target.value) }))}
-                placeholder="user_id"
-                type="number"
-                style={{ padding: 10, borderRadius: 10, backgroundColor: "rgba(26,20,16,.8)", color: "#e8dcc8", border: "1px solid rgba(184, 115, 51, 0.3)" }}
-              />
-
-              <input
-                value={form.invoice_file ?? ""}
-                onChange={(e) => setForm((p) => ({ ...p, invoice_file: e.target.value }))}
-                placeholder="invoice_file (url) optionnel"
-                style={{ padding: 10, borderRadius: 10, backgroundColor: "rgba(26,20,16,.8)", color: "#e8dcc8", border: "1px solid rgba(184, 115, 51, 0.3)" }}
-              />
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 12 }}>
-              <button onClick={() => setOpen(false)} style={{ padding: "10px 14px", borderRadius: 10, backgroundColor: "#8b5a2b", color: "#e8dcc8", border: "1px solid #b87333" }}>
-                Annuler
-              </button>
-              <button onClick={onSubmit} style={{ padding: "10px 14px", borderRadius: 10, backgroundColor: "#8b5a2b", color: "#e8dcc8", border: "1px solid #b87333" }}>
-                Enregistrer
-              </button>
-            </div>
+            <input
+              value={form.invoice_file ?? ""}
+              onChange={(e) => setForm((p) => ({ ...p, invoice_file: e.target.value }))}
+              placeholder="invoice_file (url) optionnel"
+              style={{ padding: 10, borderRadius: 10 }}
+            />
           </div>
-        </div>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 12 }}>
+            <button onClick={() => setOpen(false)} style={{ padding: "10px 14px", borderRadius: 10 }}>
+              Annuler
+            </button>
+            <button onClick={onSubmit} style={{ padding: "10px 14px", borderRadius: 10 }}>
+              Enregistrer
+            </button>
+          </div>
+        </Modal>
       )}
-      </section>
-    </div>
+    </section>
   );
 }
 
@@ -327,4 +276,43 @@ function formatDate(dateTime?: string) {
   if (!dateTime) return "-";
   const d = new Date(dateTime);
   return isNaN(d.getTime()) ? dateTime : d.toLocaleString();
+}
+
+function Modal({
+  title,
+  onClose,
+  children,
+}: {
+  title: string;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,.55)",
+        display: "grid",
+        placeItems: "center",
+        zIndex: 2000,
+        padding: 16,
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          width: "min(820px, 100%)",
+          borderRadius: 16,
+          padding: 16,
+          background: "rgba(26,20,16,.98)",
+          border: "1px solid rgba(255,255,255,.12)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 style={{ marginTop: 0 }}>{title}</h2>
+        {children}
+      </div>
+    </div>
+  );
 }
