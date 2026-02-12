@@ -20,12 +20,19 @@ import OrdersPage from "./pages/admin/OrdersPage";
 import JournalPage from "./pages/admin/JournalPage";
 import Contact from "./pages/contact";
 import CalendarPage from "./pages/admin/CalendarPage";
-
+import NotAuthorized from "./pages/NotAuthorized";
+import RoleProtectedRoute from "./components/RoleProtectedRoute";
 
 // Composants admin directs (avec API)
 import AdminProducts from "./components/admin/AdminProduct";
 import AdminUsers from "./components/admin/AdminUsers";
 
+const Roles = {
+  ADMIN: "ADMIN",
+  EDITOR: "EDITOR",
+  USER: "USER",
+  GUEST: "GUEST",
+};
 
 
 
@@ -43,23 +50,28 @@ function AppContent() {
       <main className="main-content">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/infos" element={<Infos />} />
           <Route path="/shop" element={<Shop />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/admin" element={<AdminPage />} />
           <Route path="/product/:id" element={<ProductDetail />} />
-          <Route path="/admin/produits" element={<AdminProducts/>} />
-          <Route path="/admin/utilisateurs" element={<AdminUsers />} />
-          <Route path="/admin/messages" element={<AdminChatPage />} />
-          <Route path="/admin" element={<AdminDashboardPage />} />
-          <Route path="/admin/telegraphe" element={<AdminTelegraphPage />} />
-          <Route path="/admin/statistiques" element={<AdminStatsPage />} />
-          <Route path="/admin/commandes" element={<OrdersPage />} />
-          <Route path="/admin/journal" element={<JournalPage />} />
-          <Route path="/admin/calendrier" element={<CalendarPage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+
+          <Route path="/cart" element={<RoleProtectedRoute allowedRoles={[Roles.USER, Roles.EDITOR, Roles.ADMIN]} element={<Cart />} />} />
+
+          <Route path="/admin" element={<RoleProtectedRoute allowedRoles={[Roles.ADMIN]} element={<AdminPage />} />} />
+          <Route path="/admin/produits" element={<RoleProtectedRoute allowedRoles={[Roles.ADMIN]} element={<AdminProducts />} />} />
+          <Route path="/admin/utilisateurs" element={<RoleProtectedRoute allowedRoles={[Roles.ADMIN]} element={<AdminUsers />} />} />
+          <Route path="/admin/messages" element={<RoleProtectedRoute allowedRoles={[Roles.ADMIN]} element={<AdminChatPage />} />} />
+          <Route path="/admin/dashboard" element={<RoleProtectedRoute allowedRoles={[Roles.ADMIN]} element={<AdminDashboardPage />} />} />
+          <Route path="/admin/telegraphe" element={<RoleProtectedRoute allowedRoles={[Roles.ADMIN]} element={<AdminTelegraphPage />} />} />
+          <Route path="/admin/statistiques" element={<RoleProtectedRoute allowedRoles={[Roles.ADMIN]} element={<AdminStatsPage />} />} />
+          <Route path="/admin/commandes" element={<RoleProtectedRoute allowedRoles={[Roles.ADMIN]} element={<OrdersPage />} />} />
+          <Route path="/admin/journal" element={<RoleProtectedRoute allowedRoles={[Roles.ADMIN]} element={<JournalPage />} />} />
+          <Route path="/admin/calendrier" element={<RoleProtectedRoute allowedRoles={[Roles.ADMIN]} element={<CalendarPage />} />} />
+
+          {/* Not authorized fallback */}
+          <Route path="/not-authorized" element={<NotAuthorized />} />
 
 
         </Routes>

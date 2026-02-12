@@ -1,20 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getUserCart } from '../api/api';
+import { useAuth } from '../contexts/AuthContext';
 import logo from '../assets/logo.png';
 import './Navbar.css';
 
-interface User {
-  id: number;
-  username: string;
-  email: string;
-  role: string;
-  avatar_url?: string;
-}
-
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const { user, logout } = useAuth();
   const [cartCount, setCartCount] = useState(0);
   const navigate = useNavigate();
 
@@ -29,49 +22,34 @@ const Navbar: React.FC = () => {
   };
 
   useEffect(() => {
-    
-    const checkUser = () => {
-      const userStr = localStorage.getItem('cev_user');
-      const token = localStorage.getItem('cev_auth_token');
+    if (user) {
+      fetchCartCount(user.id);
+    } else {
+      setCartCount(0);
+    }
 
-      if (userStr && token) {
-        try {
-          const parsed = JSON.parse(userStr);
-          setUser(parsed);
-          fetchCartCount(parsed.id);
-        } catch {
-          setUser(null);
-          setCartCount(0);
-        }
-      } else {
-        setUser(null);
-        setCartCount(0);
+    const handleCartUpdate = () => {
+      if (user) {
+        fetchCartCount(user.id);
       }
     };
 
-    checkUser();
-
-    window.addEventListener('storage', checkUser);
-
-    window.addEventListener('userLoggedIn', checkUser);
-
-    window.addEventListener('cartUpdated', checkUser);
+    window.addEventListener('cartUpdated', handleCartUpdate);
+    window.addEventListener('userLoggedIn', handleCartUpdate);
 
     return () => {
-      window.removeEventListener('storage', checkUser);
-      window.removeEventListener('userLoggedIn', checkUser);
-      window.removeEventListener('cartUpdated', checkUser);
+      window.removeEventListener('cartUpdated', handleCartUpdate);
+      window.removeEventListener('userLoggedIn', handleCartUpdate);
     };
-  }, []);
+  }, [user]);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('cev_auth_token');
-    localStorage.removeItem('cev_user');
-    setUser(null);
+    logout();
+    setCartCount(0);
     navigate('/');
   };
 

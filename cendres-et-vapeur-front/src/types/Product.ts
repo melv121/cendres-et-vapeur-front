@@ -21,7 +21,7 @@ export interface User {
   id: number;
   username: string;
   email: string;
-  role: 'admin' | 'editor' | 'user';
+  role: 'ADMIN' | 'EDITOR' | 'USER';
   avatar_url?: string;
   biography?: string;
 }
