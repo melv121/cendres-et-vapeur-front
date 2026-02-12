@@ -36,13 +36,18 @@ function mapApiProductToProduct(apiProduct: ApiProduct): Product {
 
   const finalPrice = price ?? 0;
 
+  // Si image_url n'existe pas ou est vide, utiliser l'endpoint du backend
+  const imageUrl = apiProduct.image_url && apiProduct.image_url.trim()
+    ? apiProduct.image_url
+    : `/products/${apiProduct.id}/image`;
+
   return {
     id: apiProduct.id,
     name: apiProduct.name,
     description: apiProduct.description || '',
     base_price: finalPrice,
     current_price: finalPrice,
-    image: apiProduct.image_url || '',
+    image: imageUrl,
     stock: apiProduct.stock,
     popularity_score: 5.0,
     category_id: apiProduct.category_id

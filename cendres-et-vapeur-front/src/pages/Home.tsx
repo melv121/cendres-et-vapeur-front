@@ -54,18 +54,18 @@ const Home: React.FC = () => {
           <p className="hero-tagline">
             Le marché post-apocalyptique où le cuivre est roi
           </p>
-          <Link to="/shop" className="cta-button" aria-label="Découvrir nos produits">
+          <Link to="/shop" className="cta-button" aria-label="Découvrir nos produits" style={{ backgroundColor: '#d4955f', color: '#000000' }}>
             Voir nos produits
           </Link>
         </div>
       </section>
-      
+
       <section className="about-section">
         <div className="about-content">
           <h2>Bienvenue dans un nouveau monde</h2>
           <p className="about-text">
-            Dans les ruines du monde ancien, une nouvelle civilisation émerge. 
-            <strong> Cendres et Vapeur</strong> est le premier marché numérique post-apocalyptique 
+            Dans les ruines du monde ancien, une nouvelle civilisation émerge.
+            <strong> Cendres et Vapeur</strong> est le premier marché numérique post-apocalyptique
             où survivants et artisans échangent des biens forgés à partir des vestiges de notre passé.
           </p>
           <div className="features-grid">
@@ -92,7 +92,7 @@ const Home: React.FC = () => {
         <div className="catalog-content">
           <h2>Nos Produits</h2>
           <p className="catalog-subtitle">Découvrez notre sélection d'artefacts et d'équipements</p>
-          
+
           {loading ? (
             <div className="loader"></div>
           ) : (

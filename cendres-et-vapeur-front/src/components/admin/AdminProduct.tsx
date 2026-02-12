@@ -11,6 +11,7 @@ export type Product = {
   stock: number;
   category_id?: number;
   status: "ACTIVE" | "HIDDEN";
+  image_url?: string;
 };
 
 export default function AdminProducts() {

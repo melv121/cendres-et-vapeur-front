@@ -661,6 +661,27 @@ export const getDashboardStats = async () => {
   };
 };
 
+export const uploadProductImage = async (productId: number, file: File) => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(`${API_BASE_URL}/products/${productId}/upload-image`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${localStorage.getItem('cev_auth_token')}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    console.error('Erreur upload image:', response.status, text);
+    throw new Error(`Erreur ${response.status}: ${text}`);
+  }
+
+  return response.json();
+};
+
 
 export {
   API_BASE_URL,
