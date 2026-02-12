@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import "./pagestyle/adminTelegraphe.css";
+import { API_BASE_URL } from "../../api/api";
 
 type Role = "ADMIN" | "EDITOR";
 type Sender = "me" | "other" | "system";
@@ -57,6 +58,9 @@ export default function AdminTelegraphePage() {
   const [query, setQuery] = useState("");
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>(seedMessages);
+  const [onlineUsers, setOnlineUsers] = useState<{ user_id?: number; username: string }[]>([]);
+  const wsRef = useRef<WebSocket | null>(null);
+  const [wsConnected, setWsConnected] = useState(false);
 
   const listRef = useRef<HTMLDivElement | null>(null);
 
@@ -70,6 +74,115 @@ export default function AdminTelegraphePage() {
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
   }, [messages.length]);
+
+  // build WS URL
+  function getWsUrl() {
+    const userStr = localStorage.getItem('cev_auth_user');
+    let clientId = '0';
+    let username = 'Guest';
+    try {
+      if (userStr) {
+        const u = JSON.parse(userStr);
+        clientId = String(u.id || u.user_id || 0);
+        username = String(u.name || u.username || u.email || 'User');
+      }
+    } catch {}
+
+    // prefer explicit env API_BASE_URL if set
+    let base = API_BASE_URL || '';
+    if (!base) {
+      // fallback to same host on port 8000
+      base = `${location.protocol === 'https:' ? 'https' : 'http'}://${location.hostname}:8000`;
+    }
+
+    const wsProto = base.startsWith('https') ? 'wss' : 'ws';
+    const host = base.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    return `${wsProto}://${host}/chat/ws?client_id=${encodeURIComponent(clientId)}&username=${encodeURIComponent(username)}`;
+  }
+
+  async function fetchOnlineUsers() {
+    try {
+      const base = API_BASE_URL || `${location.protocol === 'https:' ? 'https' : 'http'}://${location.hostname}:8000`;
+      const res = await fetch(`${base.replace(/\/$/, '')}/chat/users`);
+      if (!res.ok) return;
+      const data = await res.json();
+      // expect { online_users: [...], count: n }
+      if (Array.isArray(data.online_users)) setOnlineUsers(data.online_users);
+      else if (Array.isArray(data)) setOnlineUsers(data as any);
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  // manage WS connection when transport is WebSocket and connected
+  useEffect(() => {
+    if (!connected || transport !== 'WebSocket') {
+      if (wsRef.current) {
+        try { wsRef.current.close(); } catch {}
+        wsRef.current = null;
+      }
+      setWsConnected(false);
+      return;
+    }
+
+    const url = getWsUrl();
+    try {
+      const ws = new WebSocket(url);
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        setWsConnected(true);
+        // announce presence
+        try { ws.send(JSON.stringify({ type: 'join' })); } catch {}
+        fetchOnlineUsers();
+      };
+
+      ws.onmessage = (ev) => {
+        try {
+          const data = JSON.parse(ev.data);
+          if (data.type === 'message') {
+            setMessages((p) => [...p, {
+              id: uid(), sender: data.user_id === Number(localStorage.getItem('cev_auth_user') ? JSON.parse(String(localStorage.getItem('cev_auth_user'))).id : 0) ? 'me' : 'other',
+              author: data.username || 'Anonyme',
+              role: undefined,
+              content: data.message || data.text || JSON.stringify(data),
+              time: new Date(data.timestamp || Date.now()).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+            }] );
+          } else if (data.type === 'user_joined' || data.type === 'user_left') {
+            // refresh list
+            fetchOnlineUsers();
+            const sysMsg: ChatMessage = {
+              id: uid(), sender: 'system', author: 'Système', content: `${data.username} ${data.type === 'user_joined' ? "s'est connecté" : "s'est déconnecté"}`,
+              time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+            };
+            setMessages((p) => [...p, sysMsg]);
+          }
+        } catch (e) {
+          // if server sends plain text, push as message
+          setMessages((p) => [...p, { id: uid(), sender: 'other', author: 'Serveur', content: String(ev.data), time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) }]);
+        }
+      };
+
+      ws.onclose = () => { setWsConnected(false); wsRef.current = null; };
+      ws.onerror = () => { /* ignore for now */ };
+    } catch (e) {
+      setWsConnected(false);
+      wsRef.current = null;
+    }
+
+    // cleanup
+    return () => {
+      if (wsRef.current) try { wsRef.current.close(); } catch {}
+      wsRef.current = null;
+    };
+  }, [connected, transport]);
+
+  // keep online users refreshed periodically
+  useEffect(() => {
+    fetchOnlineUsers();
+    const id = setInterval(fetchOnlineUsers, 15_000);
+    return () => clearInterval(id);
+  }, []);
 
   function toggleConnection() {
     setConnected((v) => !v);
@@ -91,21 +204,30 @@ export default function AdminTelegraphePage() {
 
     setMessages((prev) => [...prev, msg]);
     setDraft("");
-
-    //  réponse fake 
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: uid(),
-          sender: "other",
-          author: "Valdr",
-          role: "EDITOR",
-          content: "Reçu. Continue. 🕯️",
-          time: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
-        },
-      ]);
-    }, 700);
+    // send via websocket if available
+    try {
+      const ws = wsRef.current;
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(text);
+      } else {
+        // fallback fake response for demo/offline
+        setTimeout(() => {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: uid(),
+              sender: "other",
+              author: "Valdr",
+              role: "EDITOR",
+              content: "Reçu. Continue. 🕯️",
+              time: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
+            },
+          ]);
+        }, 700);
+      }
+    } catch (e) {
+      // ignore send errors
+    }
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {

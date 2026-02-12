@@ -418,14 +418,29 @@ export const updateShiftNotes = async (id: number, data: any) => {
   return response.json();
 };
 
-export const createShiftNote = async (data: any, id: number) => {
-  const response = await fetch(`${API_BASE_URL}/shift-notes/${id}`, {
+export const createShiftNote = async (data: any) => {
+  const url = `${API_BASE_URL}/shift-notes/`;
+  if (import.meta.env.VITE_DEBUG) {
+    try { console.debug('[api] createShiftNote ->', url, { method: 'POST', credentials: 'include' }); } catch {}
+  }
+  const response = await fetch(url, {
     method: 'POST',
-
+    credentials: 'include',
     headers: getHeaders(),
     body: JSON.stringify(data),
   });
-  return response.json();
+
+  const text = await response.clone().text();
+  if (!response.ok) {
+    try {
+      const obj = JSON.parse(text);
+      throw new Error(obj.detail || obj.message || `Erreur ${response.status}`);
+    } catch {
+      throw new Error(`Erreur ${response.status}: ${text}`);
+    }
+  }
+
+  try { return JSON.parse(text); } catch { return text; }
 };
 
 export const getOrderItems = async () => {

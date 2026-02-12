@@ -106,7 +106,7 @@ const Home: React.FC = () => {
                     <h3>{product.name}</h3>
                     <p className="product-description">{product.description}</p>
                     <div className="product-footer">
-                      <span className="product-price">{product.current_price} Cu</span>
+                      <span className="product-price">{product.current_price}€</span>
                       <button
                         className="add-to-cart"
                         onClick={() => handleAddToCart(product.id)}
