@@ -27,7 +27,7 @@ const Cart = () => {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
 
   const getUserId = (): number | null => {
-    const userStr = localStorage.getItem('cev_user');
+    const userStr = localStorage.getItem('cev_auth_user');
     if (!userStr) return null;
     try {
       const user = JSON.parse(userStr);
@@ -145,7 +145,7 @@ const Cart = () => {
   const calculateShipping = () => {
     const subtotal = calculateSubtotal();
     if (subtotal === 0) return 0;
-    if (subtotal >= 200) return 0; 
+    if (subtotal >= 200) return 0;
     return 15;
   };
 
@@ -357,7 +357,7 @@ const Cart = () => {
                   )}
                 </span>
               </div>
-                  
+
               <div className="summary-divider"></div>
 
               <div className="summary-total">
@@ -379,7 +379,7 @@ const Cart = () => {
                 <div className="payment-form">
                   <div className="summary-divider"></div>
 
-                  <p style={{ opacity: 0.8 }}>
+                  <p style={{ opacity: 0.8, color: '#cd7f32' }}>
                     Confirmez-vous le paiement de {calculateTotal().toFixed(2)} € ?
                   </p>
 

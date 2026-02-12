@@ -39,7 +39,7 @@ const ProductDetail = () => {
   };
 
   const handleAddToCart = async () => {
-    const userStr = localStorage.getItem('cev_user');
+    const userStr = localStorage.getItem('cev_auth_user');
     const token = localStorage.getItem('cev_auth_token');
     if (!userStr || !token) {
       navigate('/login');

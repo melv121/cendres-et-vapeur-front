@@ -44,7 +44,7 @@ export default function AdminUsersStatic() {
 
   const isCurrentAdmin = (() => {
     try {
-      const u = localStorage.getItem('cev_user');
+      const u = localStorage.getItem('cev_auth_user');
       if (!u) return false;
       const obj = JSON.parse(u);
       return String(obj.role).toUpperCase() === 'ADMIN';
