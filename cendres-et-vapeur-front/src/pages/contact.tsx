@@ -27,52 +27,60 @@ export default function Contact() {
 
       <form className="contact-form" onSubmit={handleSubmit}>
         <div className="contact-grid">
-          
-          <div className="contact-left">
-            <label>Nom :</label>
-            <input
-              type="text"
-              name="nom"
-              value={form.nom}
-              onChange={handleChange}
-              placeholder="Ecrire votre nom "
-            />
+          <div className="form-row">
+            <div className="form-group">
+              <label>Nom :</label>
+              <input
+                type="text"
+                name="nom"
+                value={form.nom}
+                onChange={handleChange}
+                placeholder="Votre nom"
+                required
+              />
+            </div>
 
-            <label>Prénom :</label>
-            <input
-              type="text"
-              name="prenom"
-              value={form.prenom}
-              onChange={handleChange}
-              placeholder="Ecrire votre prénom"
-            />
+            <div className="form-group">
+              <label>Prénom :</label>
+              <input
+                type="text"
+                name="prenom"
+                value={form.prenom}
+                onChange={handleChange}
+                placeholder="Votre prénom"
+                required
+              />
+            </div>
+          </div>
 
+          <div className="form-group full-width">
             <label>Objet :</label>
             <input
               type="text"
               name="objet"
               value={form.objet}
               onChange={handleChange}
-              placeholder="Ecrire votre objet"
+              placeholder="Sujet de votre message"
+              required
             />
           </div>
 
-          <div className="contact-right">
+          <div className="form-group full-width">
             <label>Votre message :</label>
             <textarea
               name="message"
               value={form.message}
               onChange={handleChange}
-              placeholder="Ecrire votre message"
+              placeholder="Écrivez votre message ici..."
+              required
             />
           </div>
-
         </div>
-          <div className="contact-actions">
-            <button className="contact-btn" type="submit">
-              J’envoie le message →
-            </button>
-          </div>
+        <div className="contact-actions">
+          <button className="contact-btn" type="submit">
+            J’envoie le message →
+          </button>
+        </div>
 
 
 
