@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Header from "./components/Navbar";
 import Footer from "./layout/footer/Footer";
@@ -24,6 +25,8 @@ import NotAuthorized from "./pages/NotAuthorized";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import { useToxicityMonitor } from "./hooks/useToxicityMonitor";
 
+import { useToxicityMonitor } from "./hooks/useToxicityMonitor";
+
 // Composants admin directs (avec API)
 import AdminProducts from "./components/admin/AdminProduct";
 import AdminUsers from "./components/admin/AdminUsers";
@@ -45,19 +48,48 @@ function AppContent() {
   const isAdminRoute = location.pathname.startsWith("/admin");
 
   const { isToxic, toxicityLevel, threshold, apiData } = useToxicityMonitor();
+  const [showToxicity, setShowToxicity] = useState(true);
+
   return (
     <div className="app-container">
+        {/* Bouton toggle toxicité */}
+      <button
+        onClick={() => setShowToxicity(!showToxicity)}
+        style={{
+          position: 'fixed',
+          top: '10px',
+          right: '10px',
+          zIndex: 10000,
+          background: isToxic ? '#cc0000' : '#009900',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '50%',
+          width: '28px',
+          height: '28px',
+          cursor: 'pointer',
+          fontSize: '14px',
+          fontFamily: 'monospace',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+        title={showToxicity ? 'Masquer la toxicité' : 'Afficher la toxicité'}
+      >
+        {showToxicity ? '×' : '☢'}
+      </button>
+
         {/* Indicateur de toxicité */}
+      {showToxicity && (
       <div style={{
         position: 'fixed',
         top: '10px',
-        right: '10px',
+        right: '46px',
         padding: '10px',
         backgroundColor: isToxic ? '#ff0000' : '#00ff00',
         color: isToxic ? '#ffffff' : '#000000',
         borderRadius: '5px',
         fontSize: '12px',
-        zIndex: '9999',
+        zIndex: 9999,
         fontFamily: 'monospace'
       }}>
         <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
@@ -69,13 +101,14 @@ function AppContent() {
         </div>
         {apiData?.pollution && (
           <div style={{ fontSize: '10px', marginTop: '5px' }}>
-            S: {apiData.pollution.sulfur?.toFixed(1)} | 
-            CO2: {apiData.pollution.carbon_dioxide?.toFixed(1)} | 
-            P: {apiData.pollution.particulates?.toFixed(1)} | 
+            S: {apiData.pollution.sulfur?.toFixed(1)} |
+            CO2: {apiData.pollution.carbon_dioxide?.toFixed(1)} |
+            P: {apiData.pollution.particulates?.toFixed(1)} |
             O2: {apiData.pollution.oxygen?.toFixed(1)}
           </div>
         )}
       </div>
+      )}
       
       {isAdminRoute ? <AdminHeader /> : <Header />}
 
