@@ -234,83 +234,108 @@ const deleteOrder = async (id: number) => {
 const addToCart = async (userId: number, productId: number, quantity: number = 1) => {
   const response = await fetch(`${API_BASE_URL}/orders/cart/add?user_id=${userId}`, {
     method: 'POST',
-    
     headers: getHeaders(),
     body: JSON.stringify({ product_id: productId, quantity }),
   });
+  if (!response.ok) {
+    const text = await response.text();
+    try { throw new Error(JSON.parse(text).detail || `Erreur ${response.status}`); }
+    catch { throw new Error(`Erreur ${response.status}: ${text}`); }
+  }
   return response.json();
 };
 
 const getUserCart = async (userId: number) => {
   const response = await fetch(`${API_BASE_URL}/orders/cart/${userId}`, {
     headers: getHeaders(),
-    
   });
+  if (!response.ok) {
+    throw new Error(`Erreur ${response.status}`);
+  }
   return response.json();
 };
 
 const emptyCart = async (userId: number) => {
   const response = await fetch(`${API_BASE_URL}/orders/cart/${userId}`, {
     method: 'DELETE',
-    
     headers: getHeaders(),
   });
+  if (!response.ok) {
+    throw new Error(`Erreur ${response.status}`);
+  }
   return response.json();
 };
 
 const updateCartItemQuantity = async (userId: number, productId: number, quantity: number) => {
   const response = await fetch(`${API_BASE_URL}/orders/cart/${userId}/product/${productId}`, {
     method: 'PUT',
-    
     headers: getHeaders(),
     body: JSON.stringify({ quantity }),
   });
+  if (!response.ok) {
+    const text = await response.text();
+    try { throw new Error(JSON.parse(text).detail || `Erreur ${response.status}`); }
+    catch { throw new Error(`Erreur ${response.status}: ${text}`); }
+  }
   return response.json();
 };
 
 const removeFromCart = async (userId: number, productId: number) => {
   const response = await fetch(`${API_BASE_URL}/orders/cart/${userId}/product/${productId}`, {
     method: 'DELETE',
-    
     headers: getHeaders(),
   });
+  if (!response.ok) {
+    throw new Error(`Erreur ${response.status}`);
+  }
   return response.json();
 };
-
 
 const downloadInvoice = async (orderId: number) => {
   const response = await fetch(`${API_BASE_URL}/orders/${orderId}/invoice`, {
     headers: getHeaders(),
-    
   });
+  if (!response.ok) {
+    throw new Error(`Erreur ${response.status}`);
+  }
   return response;
 };
 
 const processPayment = async (orderId: number, paypalEmail: string, approve: boolean = true) => {
   const response = await fetch(`${API_BASE_URL}/orders/${orderId}/payment`, {
     method: 'POST',
-    
     headers: getHeaders(),
     body: JSON.stringify({ paypal_email: paypalEmail, approve }),
   });
+  if (!response.ok) {
+    const text = await response.text();
+    try { throw new Error(JSON.parse(text).detail || `Erreur ${response.status}`); }
+    catch { throw new Error(`Erreur ${response.status}: ${text}`); }
+  }
   return response.json();
 };
 
 const applyDiscount = async (orderId: number, discountCode: string) => {
   const response = await fetch(`${API_BASE_URL}/orders/${orderId}/apply-discount?discount_code=${discountCode}`, {
     method: 'POST',
-    
     headers: getHeaders(),
   });
+  if (!response.ok) {
+    const text = await response.text();
+    try { throw new Error(JSON.parse(text).detail || `Erreur ${response.status}`); }
+    catch { throw new Error(`Erreur ${response.status}: ${text}`); }
+  }
   return response.json();
 };
 
 const removeDiscount = async (orderId: number) => {
   const response = await fetch(`${API_BASE_URL}/orders/${orderId}/remove-discount`, {
     method: 'DELETE',
-    
     headers: getHeaders(),
   });
+  if (!response.ok) {
+    throw new Error(`Erreur ${response.status}`);
+  }
   return response.json();
 };
 
@@ -542,6 +567,47 @@ export const getLogsByUser = async (id: number) => {
     return response.json();
 };
 
+
+// ============ DASHBOARD ============
+
+export const getDashboardStats = async () => {
+  const [users, orders, products] = await Promise.all([
+    getUsers(),
+    getOrders(),
+    getProducts(),
+  ]);
+
+  const paidOrders = (orders || []).filter((o: any) => o.status === 'paid');
+  const totalRevenue = paidOrders.reduce((sum: number, o: any) => sum + (o.total_amount || 0), 0);
+
+  // Orders last 7 days
+  const now = Date.now();
+  const ordersLast7Days = [];
+  for (let i = 6; i >= 0; i--) {
+    const dayStart = new Date(now - i * 86400000);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(dayStart);
+    dayEnd.setHours(23, 59, 59, 999);
+    const count = (orders || []).filter((o: any) => {
+      const d = new Date(o.created_at);
+      return d >= dayStart && d <= dayEnd;
+    }).length;
+    ordersLast7Days.push({ date: dayStart.toISOString(), count });
+  }
+
+  // Top 5 products by price
+  const top5 = [...(products || [])]
+    .sort((a: any, b: any) => (b.current_price || 0) - (a.current_price || 0))
+    .slice(0, 5);
+
+  return {
+    total_users: (users || []).length,
+    total_orders: (orders || []).length,
+    total_revenue: totalRevenue,
+    top_products: top5,
+    orders_last_7_days: ordersLast7Days,
+  };
+};
 
 // ============ EXPORTS ============
 

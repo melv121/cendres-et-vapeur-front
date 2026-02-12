@@ -1,60 +1,55 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { getUserCart } from '../api/api';
+import { useAuth } from '../contexts/AuthContext';
 import logo from '../assets/logo.png';
 import './Navbar.css';
 
-interface User {
-  id: number;
-  username: string;
-  email: string;
-  role: string;
-  avatar_url?: string;
-}
-
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const { user, logout } = useAuth();
+  const [cartCount, setCartCount] = useState(0);
   const navigate = useNavigate();
 
+  const fetchCartCount = async (userId: number) => {
+    try {
+      const cart = await getUserCart(userId);
+      const count = (cart.items || []).reduce((sum: number, item: any) => sum + item.quantity, 0);
+      setCartCount(count);
+    } catch {
+      setCartCount(0);
+    }
+  };
+
   useEffect(() => {
-    // Vérifier si l'utilisateur est connecté
-    const checkUser = () => {
-      const userStr = localStorage.getItem('cev_user');
-      const token = localStorage.getItem('cev_auth_token');
-      
-      if (userStr && token) {
-        try {
-          setUser(JSON.parse(userStr));
-        } catch {
-          setUser(null);
-        }
-      } else {
-        setUser(null);
+    if (user) {
+      fetchCartCount(user.id);
+    } else {
+      setCartCount(0);
+    }
+
+    const handleCartUpdate = () => {
+      if (user) {
+        fetchCartCount(user.id);
       }
     };
 
-    checkUser();
-    
-    // Écouter les changements de localStorage
-    window.addEventListener('storage', checkUser);
-    
-    // Écouter un événement custom pour les changements dans le même onglet
-    window.addEventListener('userLoggedIn', checkUser);
-    
+    window.addEventListener('cartUpdated', handleCartUpdate);
+    window.addEventListener('userLoggedIn', handleCartUpdate);
+
     return () => {
-      window.removeEventListener('storage', checkUser);
-      window.removeEventListener('userLoggedIn', checkUser);
+      window.removeEventListener('cartUpdated', handleCartUpdate);
+      window.removeEventListener('userLoggedIn', handleCartUpdate);
     };
-  }, []);
+  }, [user]);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('cev_auth_token');
-    localStorage.removeItem('cev_user');
-    setUser(null);
+    logout();
+    setCartCount(0);
     navigate('/');
   };
 
@@ -84,14 +79,14 @@ const Navbar: React.FC = () => {
             <Link to="/shop" className="navbar-link">Boutique</Link>
           </li>
           <li className="navbar-item">
-            <Link to="/about" className="navbar-link">À propos</Link>
+            <Link to="/infos" className="navbar-link">À propos</Link>
           </li>
           <li className="navbar-item">
             <Link to="/contact" className="navbar-link">Contact</Link>
           </li>
           <li className="navbar-item navbar-cart">
             <Link to="/cart" className="navbar-link">
-              panier <span className="cart-count">0</span>
+              panier <span className="cart-count">{cartCount}</span>
             </Link>
           </li>
           

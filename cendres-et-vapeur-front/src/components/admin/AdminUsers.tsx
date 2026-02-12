@@ -20,53 +20,16 @@ type UserCreate = {
   biography?: string | null;
 };
 
-type UserUpdate = {
-  username: string;
-  email: string;
-  password?: string;
-  avatar_url?: string | null;
-  biography?: string | null;
-  role?: string;
-};
-
-const usersSeed: UserOut[] = [
-  {
-    id: 1,
-    username: "admin.valdrak",
-    email: "admin@valdrak.io",
-    role: "admin",
-    avatar_url: "",
-    biography: "Superviseur — accès complet.",
-  },
-  {
-    id: 2,
-    username: "editor.steam",
-    email: "editor@valdrak.io",
-    role: "editor",
-    avatar_url: "",
-    biography: "Éditeur — gestion contenu.",
-  },
-  {
-    id: 3,
-    username: "user.cendres",
-    email: "user@valdrak.io",
-    role: "user",
-    avatar_url: "",
-    biography: "Compte client.",
-  },
-];
-
 const emptyCreate: UserCreate & { role?: string } = {
   username: "",
   email: "",
   password: "",
-  avatar_url: "",
+  avatar_url: null,
   biography: "",
   role: "user",
 };
 
 export default function AdminUsersStatic() {
-  // ✅ Connecté à l'API
   const [users, setUsers] = useState<UserOut[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -79,7 +42,17 @@ export default function AdminUsersStatic() {
 
   const [form, setForm] = useState<UserCreate & { role?: string }>(emptyCreate);
 
-  // Charger les utilisateurs depuis l'API
+  const isCurrentAdmin = (() => {
+    try {
+      const u = localStorage.getItem('cev_auth_user');
+      if (!u) return false;
+      const obj = JSON.parse(u);
+      return String(obj.role).toUpperCase() === 'ADMIN';
+    } catch {
+      return false;
+    }
+  })();
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -124,7 +97,7 @@ export default function AdminUsersStatic() {
     setForm({
       username: u.username,
       email: u.email,
-      password: "", // optionnel en edit
+      password: "", 
       avatar_url: u.avatar_url ?? "",
       biography: u.biography ?? "",
       role: u.role,
@@ -136,7 +109,6 @@ export default function AdminUsersStatic() {
     try {
       setError(null);
 
-      // validations simples
       if (!form.username.trim()) {
         setError("Le username est obligatoire.");
         return;
@@ -152,51 +124,56 @@ export default function AdminUsersStatic() {
           return;
         }
 
-        // Appel API pour créer l'utilisateur
         const created = await createUser({
           username: form.username.trim(),
           email: form.email.trim(),
           password: form.password.trim(),
           avatar_url: form.avatar_url?.trim() || null,
           biography: form.biography?.trim() || null,
+          role: (form.role || 'user').toLowerCase(),
         });
 
         setUsers((prev) => [created, ...prev]);
+        try { window.dispatchEvent(new Event('dataChanged')); } catch (_) { }
       } else {
         if (!editingId) return;
 
-        // Appel API pour mettre à jour l'utilisateur
-        const payload: UserUpdate = {
+        const payload: any = {
           username: form.username.trim(),
           email: form.email.trim(),
           avatar_url: form.avatar_url?.trim() || null,
           biography: form.biography?.trim() || null,
         };
 
-        // si password rempli → update password
-        if (form.password?.trim()) payload.password = form.password.trim();
+        payload.password = form.password?.trim() || "UNCHANGED";
 
-        const updated = await updateUser(editingId, payload);
+        if (form.role?.trim()) payload.role = form.role.trim().toLowerCase();
+
+        console.log('Update payload:', payload);
+        await updateUser(editingId, payload);
 
         setUsers((prev) =>
           prev.map((u) =>
             u.id === editingId
               ? {
-                  ...u,
-                  username: payload.username,
-                  email: payload.email,
-                  role: payload.role ?? u.role,
-                  avatar_url: payload.avatar_url ?? null,
-                  biography: payload.biography ?? null,
-                }
+                ...u,
+                username: payload.username,
+                email: payload.email,
+                role: payload.role ?? u.role,
+                avatar_url: payload.avatar_url ?? null,
+                biography: payload.biography ?? null,
+              }
               : u
           )
         );
+        try { window.dispatchEvent(new Event('dataChanged')); } catch (_) { }
       }
 
       setOpen(false);
     } catch (e: any) {
-      setError("Erreur lors de l’enregistrement.");
+      console.error('Create/update user failed', e);
+      console.error('Full error:', JSON.stringify(e, null, 2));
+      setError(e?.message || e?.toString() || "Erreur lors de l'enregistrement.");
     }
   }
 
@@ -207,6 +184,7 @@ export default function AdminUsersStatic() {
     try {
       await deleteUser(id);
       setUsers((prev) => prev.filter((u) => u.id !== id));
+      try { window.dispatchEvent(new Event('dataChanged')); } catch (_) { }
     } catch (err: any) {
       console.error('Erreur suppression user:', err);
       setError("Erreur lors de la suppression.");
@@ -216,11 +194,11 @@ export default function AdminUsersStatic() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       {loading && (
-        <div style={{ padding: 20, textAlign: 'center' }}>
+        <div style={{ padding: 20, textAlign: 'center', color: '#d4955f' }}>
           Chargement des utilisateurs...
         </div>
       )}
-      
+
       <div
         style={{
           display: "flex",
@@ -234,12 +212,48 @@ export default function AdminUsersStatic() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Rechercher (username, email, rôle)…"
-          style={{ padding: 10, borderRadius: 10, minWidth: 260 }}
+          style={{ padding: 10, borderRadius: 10, minWidth: 260, backgroundColor: "rgba(26,20,16,.8)", color: "#e8dcc8", border: "1px solid rgba(184, 115, 51, 0.3)" }}
         />
 
-        <button onClick={openCreate} style={{ padding: "10px 14px", borderRadius: 10 }}>
-          + Nouvel utilisateur
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={openCreate} style={{ padding: "10px 14px", borderRadius: 10, backgroundColor: "#8b5a2b", color: "#e8dcc8", border: "1px solid #b87333" }}>
+            + Nouvel utilisateur
+          </button>
+          {isCurrentAdmin && (
+            <button
+              onClick={async () => {
+                setError(null);
+                try {
+                  const existing = await getUsers();
+                  const list = Array.isArray(existing) ? existing : [];
+                  const hasUser = list.some((u: any) => u.username === 'demo.user' || u.email === 'demo.user@example.com');
+                  const hasAdmin = list.some((u: any) => u.username === 'demo.admin' || u.email === 'demo.admin@example.com');
+
+                  if (!hasAdmin) {
+                    try {
+                      await createUser({ username: 'demo.admin', email: 'demo.admin@example.com', password: 'Password123!', role: 'admin' });
+                    } catch (err) { console.warn('create demo admin failed', err); }
+                  }
+
+                  if (!hasUser) {
+                    try {
+                      await createUser({ username: 'demo.user', email: 'demo.user@example.com', password: 'Password123!', role: 'user' });
+                    } catch (err) { console.warn('create demo user failed', err); }
+                  }
+
+                  const refreshed = await getUsers();
+                  if (Array.isArray(refreshed)) setUsers(refreshed);
+                } catch (err: any) {
+                  console.error('Recreate demo accounts failed', err);
+                  setError('Impossible de recréer les comptes de démonstration.');
+                }
+              }}
+              style={{ padding: '10px 14px', borderRadius: 10, background: '#264a2a', color: '#e8dcc8', border: '1px solid #3a7' }}
+            >
+              Recréer admin+user
+            </button>
+          )}
+        </div>
       </div>
 
       {error && (
@@ -251,25 +265,25 @@ export default function AdminUsersStatic() {
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr style={{ textAlign: "left" }}>
-              <th style={{ padding: 10 }}>ID</th>
-              <th style={{ padding: 10 }}>Username</th>
-              <th style={{ padding: 10 }}>Email</th>
-              <th style={{ padding: 10 }}>Rôle</th>
-              <th style={{ padding: 10 }}>Actions</th>
+            <tr style={{ textAlign: "left", backgroundColor: "rgba(184, 115, 51, 0.1)" }}>
+              <th style={{ padding: 10, color: "#d4955f", fontWeight: 800 }}>ID</th>
+              <th style={{ padding: 10, color: "#d4955f", fontWeight: 800 }}>Username</th>
+              <th style={{ padding: 10, color: "#d4955f", fontWeight: 800 }}>Email</th>
+              <th style={{ padding: 10, color: "#d4955f", fontWeight: 800 }}>Rôle</th>
+              <th style={{ padding: 10, color: "#d4955f", fontWeight: 800 }}>Actions</th>
             </tr>
           </thead>
 
           <tbody>
             {filtered.map((u) => (
               <tr key={u.id} style={{ borderTop: "1px solid rgba(255,255,255,.12)" }}>
-                <td style={{ padding: 10 }}>{u.id}</td>
-                <td style={{ padding: 10 }}>
+                <td style={{ padding: 10, color: "#e8dcc8" }}>{u.id}</td>
+                <td style={{ padding: 10, color: "#e8dcc8" }}>
                   <div style={{ fontWeight: 800 }}>{u.username}</div>
                   {u.biography && <div style={{ opacity: 0.8, fontSize: 13 }}>{u.biography}</div>}
                 </td>
-                <td style={{ padding: 10 }}>{u.email}</td>
-                <td style={{ padding: 10 }}>
+                <td style={{ padding: 10, color: "#e8dcc8" }}>{u.email}</td>
+                <td style={{ padding: 10, color: "#e8dcc8" }}>
                   <span
                     style={{
                       padding: "6px 10px",
@@ -286,10 +300,10 @@ export default function AdminUsersStatic() {
                   </span>
                 </td>
                 <td style={{ padding: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <button onClick={() => openEdit(u)} style={{ padding: "8px 10px", borderRadius: 10 }}>
+                  <button onClick={() => openEdit(u)} style={{ padding: "8px 10px", borderRadius: 10, backgroundColor: "#8b5a2b", color: "#e8dcc8", border: "1px solid #b87333" }}>
                     Modifier
                   </button>
-                  <button onClick={() => onDelete(u.id)} style={{ padding: "8px 10px", borderRadius: 10 }}>
+                  <button onClick={() => onDelete(u.id)} style={{ padding: "8px 10px", borderRadius: 10, backgroundColor: "#8b5a2b", color: "#e8dcc8", border: "1px solid #b87333" }}>
                     Supprimer
                   </button>
                 </td>
@@ -340,28 +354,28 @@ export default function AdminUsersStatic() {
                 value={form.username}
                 onChange={(e) => setForm((p) => ({ ...p, username: e.target.value }))}
                 placeholder="Username"
-                style={{ padding: 10, borderRadius: 10 }}
+                style={{ padding: 10, borderRadius: 10, backgroundColor: "rgba(26,20,16,.8)", color: "#e8dcc8", border: "1px solid rgba(184, 115, 51, 0.3)" }}
               />
 
               <input
                 value={form.email}
                 onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
                 placeholder="Email"
-                style={{ padding: 10, borderRadius: 10 }}
+                style={{ padding: 10, borderRadius: 10, backgroundColor: "rgba(26,20,16,.8)", color: "#e8dcc8", border: "1px solid rgba(184, 115, 51, 0.3)" }}
               />
 
               <input
                 value={form.role ?? ""}
                 onChange={(e) => setForm((p) => ({ ...p, role: e.target.value }))}
                 placeholder="Rôle (admin/editor/user)"
-                style={{ padding: 10, borderRadius: 10 }}
+                style={{ padding: 10, borderRadius: 10, backgroundColor: "rgba(26,20,16,.8)", color: "#e8dcc8", border: "1px solid rgba(184, 115, 51, 0.3)" }}
               />
 
               <input
                 value={form.password}
                 onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
                 placeholder={mode === "create" ? "Mot de passe (obligatoire)" : "Mot de passe (optionnel)"}
-                style={{ padding: 10, borderRadius: 10 }}
+                style={{ padding: 10, borderRadius: 10, backgroundColor: "rgba(26,20,16,.8)", color: "#e8dcc8", border: "1px solid rgba(184, 115, 51, 0.3)" }}
                 type="password"
               />
 
@@ -369,22 +383,22 @@ export default function AdminUsersStatic() {
                 value={form.avatar_url ?? ""}
                 onChange={(e) => setForm((p) => ({ ...p, avatar_url: e.target.value }))}
                 placeholder="Avatar URL (optionnel)"
-                style={{ padding: 10, borderRadius: 10, gridColumn: "1 / -1" }}
+                style={{ padding: 10, borderRadius: 10, gridColumn: "1 / -1", backgroundColor: "rgba(26,20,16,.8)", color: "#e8dcc8", border: "1px solid rgba(184, 115, 51, 0.3)" }}
               />
 
               <textarea
                 value={form.biography ?? ""}
                 onChange={(e) => setForm((p) => ({ ...p, biography: e.target.value }))}
                 placeholder="Biographie (optionnel)"
-                style={{ padding: 10, borderRadius: 10, gridColumn: "1 / -1", minHeight: 90 }}
+                style={{ padding: 10, borderRadius: 10, gridColumn: "1 / -1", minHeight: 90, backgroundColor: "rgba(26,20,16,.8)", color: "#e8dcc8", border: "1px solid rgba(184, 115, 51, 0.3)" }}
               />
             </div>
 
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 12 }}>
-              <button onClick={() => setOpen(false)} style={{ padding: "10px 14px", borderRadius: 10 }}>
+              <button onClick={() => setOpen(false)} style={{ padding: "10px 14px", borderRadius: 10, backgroundColor: "#8b5a2b", color: "#e8dcc8", border: "1px solid #b87333" }}>
                 Annuler
               </button>
-              <button onClick={onSubmit} style={{ padding: "10px 14px", borderRadius: 10 }}>
+              <button onClick={onSubmit} style={{ padding: "10px 14px", borderRadius: 10, backgroundColor: "#8b5a2b", color: "#e8dcc8", border: "1px solid #b87333" }}>
                 Enregistrer
               </button>
             </div>

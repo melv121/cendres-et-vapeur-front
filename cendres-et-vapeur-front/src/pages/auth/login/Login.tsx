@@ -66,17 +66,14 @@ function Login() {
         return
       }
 
-      // 2FA validé, on a le token (l'API retourne "token" pas "access_token")
       const token = response.token || response.access_token
       if (token) {
         localStorage.setItem('cev_auth_token', token)
         
-        // Stocker les infos utilisateur
         if (response.user) {
-          localStorage.setItem('cev_user', JSON.stringify(response.user))
+          localStorage.setItem('cev_auth_user', JSON.stringify(response.user))
         }
         
-        // Notifier la Navbar que l'utilisateur est connecté
         window.dispatchEvent(new Event('userLoggedIn'))
         
         setShow2FAModal(false)

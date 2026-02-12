@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
-import "./calendar.css";
+import { useMemo, useState, useEffect } from "react";
+import { getShiftNotes, createShiftNote, deleteShiftNote } from "../../api/api";
+import "../admin/pagestyle/calendar.css";
 
 type ViewMode = "week" | "month";
 
@@ -10,7 +11,7 @@ type ShiftNoteCreate = {
   shift_type: string;
 };
 
-type ShiftNoteOut = ShiftNoteCreate; 
+type ShiftNoteOut = ShiftNoteCreate;
 
 const seedNotes: ShiftNoteOut[] = [
   { order_id: 101, date: "2026-03-01", shift_type: "jour", content: "Contrôle stock + préparation expédition." },
@@ -26,10 +27,10 @@ const emptyCreate: ShiftNoteCreate = {
   shift_type: "jour",
 };
 
-export default function CalendarPageStatic() {
-  //  pas de loading API
+export default function CalendarPage() {
   const [error, setError] = useState<string | null>(null);
-  const [notes, setNotes] = useState<ShiftNoteOut[]>(seedNotes);
+  const [notes, setNotes] = useState<ShiftNoteOut[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [mode, setMode] = useState<ViewMode>("week");
   const [anchor, setAnchor] = useState(() => new Date());
@@ -38,6 +39,25 @@ export default function CalendarPageStatic() {
   const [openCreate, setOpenCreate] = useState(false);
   const [createForm, setCreateForm] = useState<ShiftNoteCreate>(emptyCreate);
   const [creating, setCreating] = useState(false);
+
+  // Charger les notes depuis l'API
+  useEffect(() => {
+    const fetchNotes = async () => {
+      setLoading(true);
+      try {
+        const data = await getShiftNotes();
+        const notesArray = Array.isArray(data) ? data : [];
+        setNotes(notesArray);
+        setError(null);
+      } catch (err) {
+        console.error("Erreur lors du chargement des notes:", err);
+        setError("Erreur lors du chargement des notes");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchNotes();
+  }, []);
 
   // range
   const days = useMemo(() => {
@@ -102,11 +122,18 @@ export default function CalendarPageStatic() {
         return;
       }
 
-      setNotes((prev) => [payload, ...prev]);
+      // Créer la note via l'API
+      const result = await createShiftNote(payload);
+
+      // Ajouter la note à la liste locale
+      setNotes((prev) => [result || payload, ...prev]);
 
       setOpenCreate(false);
       setCreateForm({ ...emptyCreate, date: payload.date });
       setSelectedDate(payload.date);
+    } catch (err: any) {
+      setError(err.message || "Erreur lors de la création");
+      console.error("Erreur:", err);
     } finally {
       setCreating(false);
     }
@@ -117,7 +144,7 @@ export default function CalendarPageStatic() {
       <div className="calTopBar">
         <div className="calTitleChip">
           <div className="calTitleMonth">{monthLabel}</div>
-          <div className="calTiny">Admin Calendar (statique)</div>
+          <div className="calTiny">Admin Calendar - Connecté à l'API</div>
         </div>
 
         <div className="calViewSwitch">
@@ -155,118 +182,124 @@ export default function CalendarPageStatic() {
 
       {error && <div className="calError">{error}</div>}
 
-      <div className="calLayout">
-        <div className="calBoardWrap">
-          <div className="calWeekHead">
-            {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map((x) => (
-              <div key={x} className="calWeekDay">
-                {x}
-              </div>
-            ))}
-          </div>
-
-          <div className="calGrid">
-            {days.map((d) => {
-              const key = d.toISOString().slice(0, 10);
-              const inMonth = d.getMonth() === anchor.getMonth();
-              const list = itemsByDate.get(key) ?? [];
-              const isSelected = key === selectedDate;
-
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  className={`calCell ${inMonth ? "" : "muted"} ${isSelected ? "selected" : ""}`}
-                  onClick={() => setSelectedDate(key)}
-                >
-                  <div className="calCellTop">
-                    <span className="calDayNum">{d.getDate()}</span>
-                    {list.length > 0 && <span className="calCount">{list.length}</span>}
-                  </div>
-
-                  <div className="calCellBody">
-                    {list.slice(0, 2).map((n, idx) => (
-                      <div key={idx} className={`calChip ${chipClass(n.shift_type)}`}>
-                        <span className="calChipTitle">{n.shift_type}</span>
-                        <span className="calChipSub">Order {n.order_id}</span>
-                      </div>
-                    ))}
-                    {list.length > 2 && <div className="calMore">+{list.length - 2} more</div>}
-                    {list.length === 0 && <div className="calEmptyMini">—</div>}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+      {loading ? (
+        <div className="calError" style={{ backgroundColor: "#f3f3f3", color: "#666" }}>
+          Chargement des notes...
         </div>
-
-        <aside className="calSide">
-          <div className="calSideCard">
-            <div className="calSideTitle">Selected day</div>
-            <div className="calSideDate">{selectedDate}</div>
-
-            <div className="calSideStats">
-              <div className="stat">
-                <div className="statNum">{stats.total}</div>
-                <div className="statLabel">Total notes</div>
-              </div>
-              <div className="stat">
-                <div className="statNum">{stats.todayCount}</div>
-                <div className="statLabel">Aujourd&apos;hui</div>
-              </div>
-              <div className="stat">
-                <div className="statNum">{stats.topShift}</div>
-                <div className="statLabel">Top shift</div>
-              </div>
+      ) : (
+        <div className="calLayout">
+          <div className="calBoardWrap">
+            <div className="calWeekHead">
+              {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map((x) => (
+                <div key={x} className="calWeekDay">
+                  {x}
+                </div>
+              ))}
             </div>
 
-            <button
-              className="calBtn w100"
-              onClick={() => {
-                setCreateForm((p) => ({ ...p, date: selectedDate }));
-                setOpenCreate(true);
-              }}
-            >
-              +Ajouter note à {selectedDate}
-            </button>
-          </div>
+            <div className="calGrid">
+              {days.map((d) => {
+                const key = d.toISOString().slice(0, 10);
+                const inMonth = d.getMonth() === anchor.getMonth();
+                const list = itemsByDate.get(key) ?? [];
+                const isSelected = key === selectedDate;
 
-          <div className="calSideCard">
-            <div className="calSideTitle">Notes</div>
-
-            {selectedItems.length === 0 ? (
-              <div className="calSideEmpty">Aucune note sur ce jour.</div>
-            ) : (
-              <div className="calSideList">
-                {selectedItems.map((n, idx) => (
-                  <div key={idx} className="calSideEvent">
-                    <div className="calSideEventTop">
-                      <span className={`pill ${chipClass(n.shift_type)}`}>{n.shift_type}</span>
-                      <span className="small">Order {n.order_id}</span>
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    className={`calCell ${inMonth ? "" : "muted"} ${isSelected ? "selected" : ""}`}
+                    onClick={() => setSelectedDate(key)}
+                  >
+                    <div className="calCellTop">
+                      <span className="calDayNum">{d.getDate()}</span>
+                      {list.length > 0 && <span className="calCount">{list.length}</span>}
                     </div>
-                    <div className="calSideEventText">{n.content}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
 
-          <div className="calSideCard">
-            <div className="calSideTitle">Legend</div>
-            <div className="legend">
-              <div>
-                <span className="dot dot1" /> jour
-              </div>
-              <div>
-                <span className="dot dot2" /> nuit
-              </div>
-              <div>
-                <span className="dot dot3" /> urgent
-              </div>
+                    <div className="calCellBody">
+                      {list.slice(0, 2).map((n, idx) => (
+                        <div key={idx} className={`calChip ${chipClass(n.shift_type)}`}>
+                          <span className="calChipTitle">{n.shift_type}</span>
+                          <span className="calChipSub">Order {n.order_id}</span>
+                        </div>
+                      ))}
+                      {list.length > 2 && <div className="calMore">+{list.length - 2} more</div>}
+                      {list.length === 0 && <div className="calEmptyMini">—</div>}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
-        </aside>
-      </div>
+
+          <aside className="calSide">
+            <div className="calSideCard">
+              <div className="calSideTitle">Selected day</div>
+              <div className="calSideDate">{selectedDate}</div>
+
+              <div className="calSideStats">
+                <div className="stat">
+                  <div className="statNum">{stats.total}</div>
+                  <div className="statLabel">Total notes</div>
+                </div>
+                <div className="stat">
+                  <div className="statNum">{stats.todayCount}</div>
+                  <div className="statLabel">Aujourd&apos;hui</div>
+                </div>
+                <div className="stat">
+                  <div className="statNum">{stats.topShift}</div>
+                  <div className="statLabel">Top shift</div>
+                </div>
+              </div>
+
+              <button
+                className="calBtn w100"
+                onClick={() => {
+                  setCreateForm((p) => ({ ...p, date: selectedDate }));
+                  setOpenCreate(true);
+                }}
+              >
+                +Ajouter note à {selectedDate}
+              </button>
+            </div>
+
+            <div className="calSideCard">
+              <div className="calSideTitle">Notes</div>
+
+              {selectedItems.length === 0 ? (
+                <div className="calSideEmpty">Aucune note sur ce jour.</div>
+              ) : (
+                <div className="calSideList">
+                  {selectedItems.map((n, idx) => (
+                    <div key={idx} className="calSideEvent">
+                      <div className="calSideEventTop">
+                        <span className={`pill ${chipClass(n.shift_type)}`}>{n.shift_type}</span>
+                        <span className="small">Order {n.order_id}</span>
+                      </div>
+                      <div className="calSideEventText">{n.content}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="calSideCard">
+              <div className="calSideTitle">Legend</div>
+              <div className="legend">
+                <div>
+                  <span className="dot dot1" /> jour
+                </div>
+                <div>
+                  <span className="dot dot2" /> nuit
+                </div>
+                <div>
+                  <span className="dot dot3" /> urgent
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      )}
 
       {openCreate && (
         <div className="calModalOverlay" onClick={() => setOpenCreate(false)}>
@@ -325,7 +358,7 @@ export default function CalendarPageStatic() {
               </button>
             </div>
 
-            <div className="calModalHint">(Version statique : ajout local uniquement.)</div>
+            <div className="calModalHint">(Les notes sont créées via l'API.)</div>
           </div>
         </div>
       )}
@@ -349,7 +382,7 @@ function addDays(d: Date, days: number) {
 // grid week
 function getWeekGridDays(anchor: Date) {
   const d = new Date(anchor);
-  const day = d.getDay(); 
+  const day = d.getDay();
   const diffToMonday = (day + 6) % 7;
   const monday = addDays(d, -diffToMonday);
   return Array.from({ length: 7 }, (_, i) => addDays(monday, i));

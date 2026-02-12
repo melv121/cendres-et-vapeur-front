@@ -1,9 +1,11 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { getUserCart, getProductById, updateCartItemQuantity, removeFromCart, emptyCart, updateOrder } from '../api/api';
 import '../styles/Cart.css';
 
 interface CartItem {
   id: number;
+  product_id: number;
   name: string;
   description: string;
   image: string;
@@ -14,58 +16,125 @@ interface CartItem {
 
 const Cart = () => {
   const navigate = useNavigate();
-  
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: 1,
-      name: 'Engrenage en Cuivre',
-      description: 'Mécanisme forgé à la main',
-      image: '',
-      price: 45,
-      quantity: 2,
-      stock: 12
-    },
-    {
-      id: 2,
-      name: 'Lampe à Vapeur',
-      description: 'Éclairage portable',
-      image: '',
-      price: 78,
-      quantity: 1,
-      stock: 8
-    },
-    {
-      id: 3,
-      name: 'Montre Mécanique',
-      description: 'Garde-temps restauré',
-      image: '',
-      price: 120,
-      quantity: 1,
-      stock: 5
+
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [orderId, setOrderId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [showPayment, setShowPayment] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+
+  const getUserId = (): number | null => {
+    const userStr = localStorage.getItem('cev_auth_user');
+    if (!userStr) return null;
+    try {
+      const user = JSON.parse(userStr);
+      return user.id || null;
+    } catch {
+      return null;
     }
-  ]);
+  };
 
-  const updateQuantity = (id: number, delta: number) => {
-    setCartItems(items =>
-      items.map(item => {
-        if (item.id === id) {
-          const newQuantity = item.quantity + delta;
-          if (newQuantity >= 1 && newQuantity <= item.stock) {
-            return { ...item, quantity: newQuantity };
+  const userId = getUserId();
+
+  useEffect(() => {
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+    fetchCart();
+  }, []);
+
+  const fetchCart = async () => {
+    if (!userId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const cart = await getUserCart(userId);
+
+      setOrderId(cart.id);
+
+      // Pour chaque item du panier, ça récupère les infos du produit
+      const items: CartItem[] = await Promise.all(
+        (cart.items || []).map(async (item: any) => {
+          try {
+            const product = await getProductById(item.product_id);
+            return {
+              id: item.id,
+              product_id: item.product_id,
+              name: product.name || `Produit #${item.product_id}`,
+              description: product.description || '',
+              image: product.image_url || '',
+              price: Number(item.unit_price_frozen),
+              quantity: item.quantity,
+              stock: product.stock || 99,
+            };
+          } catch {
+            return {
+              id: item.id,
+              product_id: item.product_id,
+              name: `Produit #${item.product_id}`,
+              description: '',
+              image: '',
+              price: Number(item.unit_price_frozen),
+              quantity: item.quantity,
+              stock: 99,
+            };
           }
-        }
-        return item;
-      })
-    );
+        })
+      );
+
+      setCartItems(items);
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors du chargement du panier');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const removeItem = (id: number) => {
-    setCartItems(items => items.filter(item => item.id !== id));
+  const updateQuantity = async (id: number, delta: number) => {
+    const item = cartItems.find(i => i.id === id);
+    if (!item || !userId) return;
+
+    const newQuantity = item.quantity + delta;
+    if (newQuantity < 1 || newQuantity > item.stock) return;
+
+    try {
+      await updateCartItemQuantity(userId, item.product_id, newQuantity);
+      setCartItems(items =>
+        items.map(i => i.id === id ? { ...i, quantity: newQuantity } : i)
+      );
+      window.dispatchEvent(new Event('cartUpdated'));
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors de la mise à jour');
+    }
   };
 
-  const clearCart = () => {
-    if (window.confirm('Êtes-vous sûr de vouloir vider le panier ?')) {
+  const removeItem = async (id: number) => {
+    const item = cartItems.find(i => i.id === id);
+    if (!item || !userId) return;
+
+    try {
+      await removeFromCart(userId, item.product_id);
+      setCartItems(items => items.filter(i => i.id !== id));
+      window.dispatchEvent(new Event('cartUpdated'));
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors de la suppression');
+    }
+  };
+
+  const clearCart = async () => {
+    if (!userId) return;
+    if (!window.confirm('Êtes-vous sûr de vouloir vider le panier ?')) return;
+
+    try {
+      await emptyCart(userId);
       setCartItems([]);
+      window.dispatchEvent(new Event('cartUpdated'));
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors du vidage du panier');
     }
   };
 
@@ -76,7 +145,7 @@ const Cart = () => {
   const calculateShipping = () => {
     const subtotal = calculateSubtotal();
     if (subtotal === 0) return 0;
-    if (subtotal >= 200) return 0; 
+    if (subtotal >= 200) return 0;
     return 15;
   };
 
@@ -85,12 +154,90 @@ const Cart = () => {
   };
 
   const handleCheckout = () => {
-    if (cartItems.length === 0) {
-      alert('Votre panier est vide');
-      return;
-    }
-    alert('Redirection vers le paiement...');
+    if (cartItems.length === 0) return;
+    setShowPayment(true);
   };
+
+  const handleConfirmPayment = async () => {
+    if (!orderId || !userId) return;
+    setPaying(true);
+    setError(null);
+    try {
+      await updateOrder(orderId, {
+        status: 'paid',
+        total_amount: calculateTotal(),
+        user_id: userId,
+      });
+      setPaymentSuccess(true);
+      setCartItems([]);
+      setShowPayment(false);
+      window.dispatchEvent(new Event('cartUpdated'));
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors du paiement');
+    } finally {
+      setPaying(false);
+    }
+  };
+
+  if (paymentSuccess) {
+    return (
+      <div className="cart-page">
+        <div className="container">
+          <div className="empty-cart">
+            <h2>Paiement réussi</h2>
+            <p>Votre commande a été confirmée. Une facture a été générée.</p>
+            <button onClick={() => navigate('/shop')} className="btn-primary">
+              Continuer mes achats
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!userId) {
+    return (
+      <div className="cart-page">
+        <div className="container">
+          <div className="empty-cart">
+            <h2>Connexion requise</h2>
+            <p>Vous devez être connecté pour accéder à votre panier.</p>
+            <Link to="/login" className="btn-primary">
+              Se connecter
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="cart-page">
+        <div className="container">
+          <div className="empty-cart">
+            <p>Chargement du panier…</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="cart-page">
+        <div className="container">
+          <div className="empty-cart">
+            <h2>Erreur</h2>
+            <p>{error}</p>
+            <button onClick={fetchCart} className="btn-primary">
+              Réessayer
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (cartItems.length === 0) {
     return (
@@ -210,7 +357,7 @@ const Cart = () => {
                   )}
                 </span>
               </div>
-                  
+
               <div className="summary-divider"></div>
 
               <div className="summary-total">
@@ -218,19 +365,47 @@ const Cart = () => {
                 <span className="total-amount">{calculateTotal().toFixed(2)} €</span>
               </div>
 
-              <button onClick={handleCheckout} className="btn-checkout">
-                Procéder au paiement
-              </button>
+              {!showPayment ? (
+                <>
+                  <button onClick={handleCheckout} className="btn-checkout">
+                    Procéder au paiement
+                  </button>
 
-              <div className="payment-methods">
-                <p className="payment-title">Paiements acceptés</p>
-                <div className="payment-icons">
+                  <div className="security-badge">
+                    <span>Paiement 100% sécurisé</span>
+                  </div>
+                </>
+              ) : (
+                <div className="payment-form">
+                  <div className="summary-divider"></div>
+
+                  <p style={{ opacity: 0.8, color: '#cd7f32' }}>
+                    Confirmez-vous le paiement de {calculateTotal().toFixed(2)} € ?
+                  </p>
+
+                  {error && (
+                    <p style={{ color: '#d4955f', marginTop: 8 }}>{error}</p>
+                  )}
+
+                  <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                    <button
+                      onClick={() => { setShowPayment(false); setError(null); }}
+                      className="btn-primary"
+                      style={{ flex: 1, padding: 12 }}
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      onClick={handleConfirmPayment}
+                      className="btn-checkout"
+                      disabled={paying}
+                      style={{ flex: 1 }}
+                    >
+                      {paying ? 'Paiement en cours…' : 'Confirmer le paiement'}
+                    </button>
+                  </div>
                 </div>
-              </div>
-
-              <div className="security-badge">
-                <span>Paiement 100% sécurisé</span>
-              </div>
+              )}
             </div>
           </div>
         </div>
