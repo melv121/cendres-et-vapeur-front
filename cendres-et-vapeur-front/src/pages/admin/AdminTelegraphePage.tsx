@@ -65,7 +65,7 @@ export default function AdminTelegraphePage() {
 
     const wsProto = base.startsWith('wss') ? 'wss' : 'ws';
     const host = base.replace(/^wss?:\/\//, '').replace(/\/$/, '');
-    return `${wsProto}://${host}/chat/ws?client_id=${encodeURIComponent(clientId)}&username=${encodeURIComponent(username)}`;
+    return `${wsProto}://${host}/chat/ws`;
   }
 
   async function fetchOnlineUsers() {
@@ -98,8 +98,7 @@ export default function AdminTelegraphePage() {
       ws.onopen = () => {
         console.log('WS connected');
         setWsConnected(true);
-        // announce presence
-        try { ws.send(JSON.stringify({ type: 'join' })); } catch {}
+        // announce presence - no join
         fetchOnlineUsers();
       };
 
@@ -174,8 +173,9 @@ export default function AdminTelegraphePage() {
     try {
       const ws = wsRef.current;
       if (ws && ws.readyState === WebSocket.OPEN) {
-        console.log('Sending WS message:', text);
-        ws.send(text);
+        const wsMsg = { message: text, user_id: clientId, username };
+        console.log('Sending WS message:', wsMsg);
+        ws.send(JSON.stringify(wsMsg));
       } else {
         console.log('WS not open, readyState:', ws ? ws.readyState : 'no ws');
       }
