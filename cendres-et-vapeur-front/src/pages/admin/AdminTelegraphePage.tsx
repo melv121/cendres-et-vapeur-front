@@ -55,6 +55,7 @@ export default function AdminTelegraphePage() {
         username = String(u.name || u.username || u.email || 'User');
       }
     } catch {}
+    console.log('WS URL params - clientId:', clientId, 'username:', username);
 
     // prefer explicit env API_BASE_URL if set
     let base = 'ws://89.168.38.93'; // direct WS to backend
@@ -72,13 +73,15 @@ export default function AdminTelegraphePage() {
     try {
       const base = 'http://89.168.38.93'; // direct to backend
       const res = await fetch(`${base}/chat/users`);
+      console.log('fetchOnlineUsers response:', res.status, res.statusText);
       if (!res.ok) return;
       const data = await res.json();
+      console.log('Online users data:', data);
       // expect { online_users: [...], count: n }
       if (Array.isArray(data.online_users)) setOnlineUsers(data.online_users);
       else if (Array.isArray(data)) setOnlineUsers(data as any);
     } catch (e) {
-      // ignore
+      console.error('Error fetching online users:', e);
     }
   }
 
@@ -102,20 +105,25 @@ export default function AdminTelegraphePage() {
         console.log('WS connected');
         setWsConnected(true);
         // announce presence
-        try { ws.send(JSON.stringify({ type: 'join' })); } catch {}
+        const joinMsg = { type: 'join', user_id: clientId, username };
+        console.log('Sending join:', joinMsg);
+        try { ws.send(JSON.stringify(joinMsg)); } catch {}
         fetchOnlineUsers();
       };
 
       ws.onmessage = (ev) => {
-        console.log('WS message:', ev.data);
+        console.log('WS message received:', ev.data);
         try {
           const data = JSON.parse(ev.data);
+          console.log('Parsed data:', data);
           if (data.type === 'message') {
+            const isMe = data.user_id == clientId; // use == for string/number comparison
+            console.log('Adding message, isMe:', isMe, 'clientId:', clientId, 'data.user_id:', data.user_id);
             setMessages((p) => [...p, {
-              id: uid(), sender: data.user_id === Number(localStorage.getItem('cev_auth_user') ? JSON.parse(String(localStorage.getItem('cev_auth_user'))).id : 0) ? 'me' : 'other',
+              id: uid(), sender: isMe ? 'me' : 'other',
               author: data.username || 'Anonyme',
               role: undefined,
-              content: data.message || data.text || JSON.stringify(data),
+              content: data.message || data.content || data.text || JSON.stringify(data),
               time: new Date(data.timestamp || Date.now()).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
             }] );
           } else if (data.type === 'user_joined' || data.type === 'user_left') {
@@ -128,6 +136,7 @@ export default function AdminTelegraphePage() {
             setMessages((p) => [...p, sysMsg]);
           }
         } catch (e) {
+          console.error('Error parsing WS message:', e);
           setMessages((p) => [...p, { id: uid(), sender: 'other', author: 'Serveur', content: String(ev.data), time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) }]);
         }
       };
@@ -176,8 +185,9 @@ export default function AdminTelegraphePage() {
     try {
       const ws = wsRef.current;
       if (ws && ws.readyState === WebSocket.OPEN) {
-        console.log('Sending WS message:', text);
-        ws.send(text);
+        const msg = { type: 'message', content: text };
+        console.log('Sending WS message:', msg);
+        ws.send(JSON.stringify(msg));
       } else {
         console.log('WS not open');
       }
