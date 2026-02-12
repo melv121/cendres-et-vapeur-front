@@ -219,40 +219,6 @@ export default function AdminUsersStatic() {
           <button onClick={openCreate} style={{ padding: "10px 14px", borderRadius: 10, backgroundColor: "#8b5a2b", color: "#e8dcc8", border: "1px solid #b87333" }}>
             + Nouvel utilisateur
           </button>
-          {isCurrentAdmin && (
-            <button
-              onClick={async () => {
-                setError(null);
-                try {
-                  const existing = await getUsers();
-                  const list = Array.isArray(existing) ? existing : [];
-                  const hasUser = list.some((u: any) => u.username === 'demo.user' || u.email === 'demo.user@example.com');
-                  const hasAdmin = list.some((u: any) => u.username === 'demo.admin' || u.email === 'demo.admin@example.com');
-
-                  if (!hasAdmin) {
-                    try {
-                      await createUser({ username: 'demo.admin', email: 'demo.admin@example.com', password: 'Password123!', role: 'admin' });
-                    } catch (err) { console.warn('create demo admin failed', err); }
-                  }
-
-                  if (!hasUser) {
-                    try {
-                      await createUser({ username: 'demo.user', email: 'demo.user@example.com', password: 'Password123!', role: 'user' });
-                    } catch (err) { console.warn('create demo user failed', err); }
-                  }
-
-                  const refreshed = await getUsers();
-                  if (Array.isArray(refreshed)) setUsers(refreshed);
-                } catch (err: any) {
-                  console.error('Recreate demo accounts failed', err);
-                  setError('Impossible de recréer les comptes de démonstration.');
-                }
-              }}
-              style={{ padding: '10px 14px', borderRadius: 10, background: '#264a2a', color: '#e8dcc8', border: '1px solid #3a7' }}
-            >
-              Recréer admin+user
-            </button>
-          )}
         </div>
       </div>
 

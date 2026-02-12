@@ -16,11 +16,11 @@ const getUsers = async () => {
   const response = await fetch(`${API_BASE_URL}/users`, {
     headers: getHeaders(),
   });
-  
+
   if (!response.ok) {
     throw new Error(`Erreur serveur: ${response.status}`);
   }
-  
+
   return response.json();
 };
 
@@ -37,7 +37,7 @@ const createUser = async (userData: any) => {
     headers: getHeaders(),
     body: JSON.stringify(userData),
   });
-  
+
   if (!response.ok) {
     const text = await response.text();
     try {
@@ -47,7 +47,7 @@ const createUser = async (userData: any) => {
       throw new Error(`Erreur ${response.status}: ${text}`);
     }
   }
-  
+
   return response.json();
 };
 
@@ -57,7 +57,7 @@ const updateUser = async (id: number, userData: any) => {
     headers: getHeaders(),
     body: JSON.stringify(userData),
   });
-  
+
   if (!response.ok) {
     const text = await response.text();
     try {
@@ -67,7 +67,7 @@ const updateUser = async (id: number, userData: any) => {
       throw new Error(`Erreur ${response.status}: ${text}`);
     }
   }
-  
+
   return response.json();
 };
 
@@ -84,7 +84,7 @@ const deleteUser = async (id: number) => {
 const getProducts = async () => {
   const response = await fetch(`${API_BASE_URL}/products`, {
     headers: getHeaders(),
-    
+
   });
   return response.json();
 };
@@ -92,7 +92,7 @@ const getProducts = async () => {
 const getProductById = async (id: number) => {
   const response = await fetch(`${API_BASE_URL}/products/${id}`, {
     headers: getHeaders(),
-    
+
   });
   return response.json();
 };
@@ -102,15 +102,15 @@ const createProduct = async (productData: any) => {
   console.log('Token envoyé:', localStorage.getItem('cev_auth_token'));
   console.log('Headers:', headers);
   console.log('Payload:', productData);
-  
+
   const response = await fetch(`${API_BASE_URL}/products`, {
     method: 'POST',
     headers: headers,
     body: JSON.stringify(productData),
   });
-  
+
   console.log('Response status:', response.status);
-  
+
   // Gérer les erreurs HTTP
   if (!response.ok) {
     const text = await response.text();
@@ -122,7 +122,7 @@ const createProduct = async (productData: any) => {
       throw new Error(`Erreur ${response.status}: ${text}`);
     }
   }
-  
+
   return response.json();
 };
 
@@ -132,7 +132,7 @@ const updateProduct = async (id: number, productData: any) => {
     headers: getHeaders(),
     body: JSON.stringify(productData),
   });
-  
+
   if (!response.ok) {
     const text = await response.text();
     try {
@@ -142,14 +142,14 @@ const updateProduct = async (id: number, productData: any) => {
       throw new Error(`Erreur ${response.status}: ${text}`);
     }
   }
-  
+
   return response.json();
 };
 
 const deleteProduct = async (id: number) => {
   const response = await fetch(`${API_BASE_URL}/products/${id}`, {
     method: 'DELETE',
-    
+
     headers: getHeaders(),
   });
   return response.json();
@@ -158,16 +158,16 @@ const deleteProduct = async (id: number) => {
 const getPriceInfos = async (id: number) => {
   const response = await fetch(`${API_BASE_URL}/products/${id}/price-infos`, {
     headers: getHeaders(),
-    
+
   });
   return response.json();
 };
- 
+
 const View = async (id: number) => {
   const response = await fetch(`${API_BASE_URL}/products/${id}/view`, {
     method: 'POST',
     headers: getHeaders(),
-    
+
   });
   return response.json();
 };
@@ -176,7 +176,7 @@ const Purchase = async (id: number) => {
   const response = await fetch(`${API_BASE_URL}/products/${id}/purchase`, {
     method: 'POST',
     headers: getHeaders(),
-    
+
   });
   return response.json();
 };
@@ -187,7 +187,7 @@ const Purchase = async (id: number) => {
 const getOrders = async () => {
   const response = await fetch(`${API_BASE_URL}/orders`, {
     headers: getHeaders(),
-    
+
   });
   return response.json();
 };
@@ -195,7 +195,7 @@ const getOrders = async () => {
 const getOrderById = async (id: number) => {
   const response = await fetch(`${API_BASE_URL}/orders/${id}`, {
     headers: getHeaders(),
-    
+
   });
   return response.json();
 };
@@ -203,7 +203,7 @@ const getOrderById = async (id: number) => {
 const createOrder = async (orderData: { status: string; total_amount: number; user_id: number }) => {
   const response = await fetch(`${API_BASE_URL}/orders`, {
     method: 'POST',
-    
+
     headers: getHeaders(),
     body: JSON.stringify(orderData),
   });
@@ -213,17 +213,27 @@ const createOrder = async (orderData: { status: string; total_amount: number; us
 const updateOrder = async (id: number, orderData: { status: string; total_amount: number; user_id: number }) => {
   const response = await fetch(`${API_BASE_URL}/orders/${id}`, {
     method: 'PUT',
-    
     headers: getHeaders(),
     body: JSON.stringify(orderData),
   });
+
+  if (!response.ok) {
+    const text = await response.text();
+    try {
+      const errorData = JSON.parse(text);
+      throw new Error(errorData.detail || `Erreur ${response.status}`);
+    } catch {
+      throw new Error(`Erreur ${response.status}: ${text}`);
+    }
+  }
+
   return response.json();
 };
 
 const deleteOrder = async (id: number) => {
   const response = await fetch(`${API_BASE_URL}/orders/${id}`, {
     method: 'DELETE',
-    
+
     headers: getHeaders(),
   });
   return response.json();
@@ -344,7 +354,7 @@ const removeDiscount = async (orderId: number) => {
 const login = async (email: string, password: string) => {
   const response = await fetch(`${API_BASE_URL}/api/auth/login/`, {
     method: 'POST',
-    
+
     headers: getHeaders(),
     body: JSON.stringify({ email, password }),
   });
@@ -354,7 +364,7 @@ const login = async (email: string, password: string) => {
 const verify2FA = async (userId: number, code: string) => {
   const response = await fetch(`${API_BASE_URL}/api/auth/verify-2fa/`, {
     method: 'POST',
-    
+
     headers: getHeaders(),
     body: JSON.stringify({ user_id: userId, code }),
   });
@@ -364,7 +374,7 @@ const verify2FA = async (userId: number, code: string) => {
 const register = async (username: string, email: string, password: string) => {
   const response = await fetch(`${API_BASE_URL}/api/auth/register/`, {
     method: 'POST',
-    
+
     headers: getHeaders(),
     body: JSON.stringify({ username, email, password }),
   });
@@ -372,199 +382,199 @@ const register = async (username: string, email: string, password: string) => {
 };
 
 export const deleteShiftNote = async (id: number) => {
-    const response = await fetch(`${API_BASE_URL}/shift-notes/${id}`, {
-        method: 'DELETE',
-         
-        headers: getHeaders(),
-    });
-    return response.json();
+  const response = await fetch(`${API_BASE_URL}/shift-notes/${id}`, {
+    method: 'DELETE',
+
+    headers: getHeaders(),
+  });
+  return response.json();
 };
 
 export const getShiftNotes = async () => {
-    const response = await fetch(`${API_BASE_URL}/shift-notes/`, {
-        method: 'GET', 
-         
-        headers: getHeaders(),
-    });
-    return response.json();
+  const response = await fetch(`${API_BASE_URL}/shift-notes/`, {
+    method: 'GET',
+
+    headers: getHeaders(),
+  });
+  return response.json();
 };
 
 export const getShiftNotesById = async (id: number) => {
-    const response = await fetch(`${API_BASE_URL}/shift-notes/${id}`, {
-        method: 'GET', 
-         
-        headers: getHeaders(),
-    });
-    return response.json();
+  const response = await fetch(`${API_BASE_URL}/shift-notes/${id}`, {
+    method: 'GET',
+
+    headers: getHeaders(),
+  });
+  return response.json();
 };
 
 export const updateShiftNotes = async (id: number, data: any) => {
-    const response = await fetch(`${API_BASE_URL}/shift-notes/${id}`, {
-        method: 'PUT', 
-         
-        headers: getHeaders(),
-        body: JSON.stringify(data),
-    });
-    return response.json();
+  const response = await fetch(`${API_BASE_URL}/shift-notes/${id}`, {
+    method: 'PUT',
+
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  return response.json();
 };
 
 export const createShiftNote = async (data: any, id: number) => {
-    const response = await fetch(`${API_BASE_URL}/shift-notes/${id}`, {
-        method: 'POST',
-        
-        headers: getHeaders(),
-        body: JSON.stringify(data),
-    });
-    return response.json();
+  const response = await fetch(`${API_BASE_URL}/shift-notes/${id}`, {
+    method: 'POST',
+
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  return response.json();
 };
 
 export const getOrderItems = async () => {
-    const response = await fetch(`${API_BASE_URL}/order-items/`, {
-        method: 'GET', 
-        
-        headers: getHeaders(),
-    });
-    return response.json();
+  const response = await fetch(`${API_BASE_URL}/order-items/`, {
+    method: 'GET',
+
+    headers: getHeaders(),
+  });
+  return response.json();
 };
 
 export const getOrderItemsById = async (id: number) => {
-    const response = await fetch(`${API_BASE_URL}/order-items/${id}`, {
-        method: 'GET',
-        
-        headers: getHeaders(),
-    });
-    return response.json();
+  const response = await fetch(`${API_BASE_URL}/order-items/${id}`, {
+    method: 'GET',
+
+    headers: getHeaders(),
+  });
+  return response.json();
 };
 
 export const updateOrderItems = async (id: number, data: any) => {
-    const response = await fetch(`${API_BASE_URL}/order-items/${id}`, {
-        method: 'PUT',
-        
-        headers: getHeaders(),
-        body: JSON.stringify(data),
-    });
-    return response.json();
+  const response = await fetch(`${API_BASE_URL}/order-items/${id}`, {
+    method: 'PUT',
+
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  return response.json();
 };
 
 export const createOrderItems = async (data: any) => {
-    const response = await fetch(`${API_BASE_URL}/order-items/`, {
-        method: 'POST',
-        
-        headers: getHeaders(),
-        body: JSON.stringify(data),
-    });
-    return response.json();
+  const response = await fetch(`${API_BASE_URL}/order-items/`, {
+    method: 'POST',
+
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  return response.json();
 };
 
 export const deleteOrderItems = async (id: number) => {
-    const response = await fetch(`${API_BASE_URL}/order-items/${id}`, {
-        method: 'DELETE',
-        
-        headers: getHeaders(),
-    });
-    return response.json();
+  const response = await fetch(`${API_BASE_URL}/order-items/${id}`, {
+    method: 'DELETE',
+
+    headers: getHeaders(),
+  });
+  return response.json();
 };
 
 export const voteProduct = async (productId: number, vote: number) => {
-    const response = await fetch(`${API_BASE_URL}/products/${productId}/vote/`, {
-        method: 'POST',
-        
-        headers: getHeaders(),
-        body: JSON.stringify({ vote }),
-    });
-    return response.json();
+  const response = await fetch(`${API_BASE_URL}/products/${productId}/vote/`, {
+    method: 'POST',
+
+    headers: getHeaders(),
+    body: JSON.stringify({ vote }),
+  });
+  return response.json();
 };
 
 export const likeProduct = async (productId: number, data: any) => {
-    const response = await fetch(`${API_BASE_URL}/products/${productId}/like/`, {
-        method: 'POST',
-        
-        headers: getHeaders(),
-        body: JSON.stringify(data),
-    });
-    return response.json();
+  const response = await fetch(`${API_BASE_URL}/products/${productId}/like/`, {
+    method: 'POST',
+
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  return response.json();
 };
 
 export const sendMail = async (data: any) => {
-    const response = await fetch(`${API_BASE_URL}/mail/`, {
-        method: 'POST',
-        
-        headers: getHeaders(),
-        body: JSON.stringify(data),
-    });
-    return response.json();
+  const response = await fetch(`${API_BASE_URL}/mail/`, {
+    method: 'POST',
+
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  return response.json();
 };
 
 export const getMailStatus = async () => {
-    const response = await fetch(`${API_BASE_URL}/mail/status/`, {
-        method: 'GET',
-        
-        headers: getHeaders(),
-    });
-    return response.json();
+  const response = await fetch(`${API_BASE_URL}/mail/status/`, {
+    method: 'GET',
+
+    headers: getHeaders(),
+  });
+  return response.json();
 };
 
-    export const getProductVotes = async (id:number) => {
-    const response = await fetch(`${API_BASE_URL}/products/${id}/votes`, {
-        method: 'GET',
-        credentials: 'include', 
-        headers: getHeaders(),
-    });
-    return response.json();
+export const getProductVotes = async (id: number) => {
+  const response = await fetch(`${API_BASE_URL}/products/${id}/votes`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: getHeaders(),
+  });
+  return response.json();
 };
 
-export const getProductLikes = async (id:number) => {
-    const response = await fetch(`${API_BASE_URL}/products/${id}/likes-count`, {
-        method: 'GET',
-        credentials: 'include', 
-        headers: getHeaders(),
-    });
-    return response.json();
+export const getProductLikes = async (id: number) => {
+  const response = await fetch(`${API_BASE_URL}/products/${id}/likes-count`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: getHeaders(),
+  });
+  return response.json();
 };
 
 export const getTopVentes = async () => {
-    const response = await fetch(`${API_BASE_URL}/products/top/sales`, {
-        method: 'GET',
-        credentials: 'include', 
-        headers: getHeaders(),
-    });
-    return response.json();
+  const response = await fetch(`${API_BASE_URL}/products/top/sales`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: getHeaders(),
+  });
+  return response.json();
 };
 
 export const getUsersSearch = async () => {
-    const response = await fetch(`${API_BASE_URL}/users/search`, {
-        method: 'GET',
-        credentials: 'include', 
-        headers: getHeaders(),
-    });
-    return response.json();
+  const response = await fetch(`${API_BASE_URL}/users/search`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: getHeaders(),
+  });
+  return response.json();
 };
 
 export const getProductsSearch = async () => {
-    const response = await fetch(`${API_BASE_URL}/products/search`, {
-        method: 'GET',
-        credentials: 'include', 
-        headers: getHeaders(),
-    });
-    return response.json();
+  const response = await fetch(`${API_BASE_URL}/products/search`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: getHeaders(),
+  });
+  return response.json();
 };
 
 export const getLogs = async () => {
-    const response = await fetch(`${API_BASE_URL}/logs`, {
-        method: 'GET',
-        credentials: 'include', 
-        headers: getHeaders(),
-    });
-    return response.json();
+  const response = await fetch(`${API_BASE_URL}/logs`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: getHeaders(),
+  });
+  return response.json();
 };
 
 export const getLogsByUser = async (id: number) => {
-    const response = await fetch(`${API_BASE_URL}/logs/user/${id}`, {
-        method: 'GET',
-        credentials: 'include', 
-        headers: getHeaders(),
-    });
-    return response.json();
+  const response = await fetch(`${API_BASE_URL}/logs/user/${id}`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: getHeaders(),
+  });
+  return response.json();
 };
 
 
