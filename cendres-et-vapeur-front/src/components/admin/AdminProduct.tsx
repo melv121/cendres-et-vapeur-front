@@ -22,15 +22,12 @@ export default function AdminProducts() {
 
   const total = useMemo(() => rows.length, [rows]);
 
-  // Charger les produits depuis l'API
   const fetchProducts = async () => {
     setLoading(true);
     setError(null);
     try {
       const response = await getProducts();
-      // L'API retourne directement un tableau de produits
       const data = Array.isArray(response) ? response : (response.products || []);
-      // Adapter les données de l'API au format du composant
       const products = data.map((product: any) => ({
         id: product.id,
         name: product.name || 'Sans nom',
@@ -47,24 +44,12 @@ export default function AdminProducts() {
     }
   };
 
-  // Charger les données au montage du composant
   useEffect(() => {
     fetchProducts();
   }, []);
 
-  // Créer un nouveau produit
   const onCreate = async (p: Omit<Product, 'id'>) => {
     try {
-      console.log('Création produit avec:', {
-        name: p.name,
-        description: p.description || '',
-        category_id: p.category_id || 1,
-        stock: Number(p.stock),
-        base_price: Number(p.price),
-        current_price: Number(p.price),
-        popularity_score: 0,
-      });
-
       const newProduct = await createProduct({
         name: p.name,
         description: p.description || '',
@@ -76,9 +61,6 @@ export default function AdminProducts() {
         popularity_score: 0,
       });
 
-      console.log('Produit créé:', newProduct);
-
-      // Ajouter le nouveau produit à la liste
       setRows((prev) => [...prev, {
         id: newProduct.id,
         name: newProduct.name,
@@ -97,7 +79,6 @@ export default function AdminProducts() {
 
   const onSave = async (p: Product) => {
     try {
-      // L'API exige TOUS les champs pour la mise à jour
       await updateProduct(p.id, {
         name: p.name,
         description: p.description || '',

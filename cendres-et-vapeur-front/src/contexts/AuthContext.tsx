@@ -38,7 +38,6 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(false)
   }, [])
 
-  // Listen for login/logout events
   useEffect(() => {
     const handleUserLoggedIn = () => {
       const storedToken = localStorage.getItem(STORAGE_KEY)
@@ -88,7 +87,6 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
         setToken(response.token)
         localStorage.setItem(STORAGE_KEY, response.token)
         
-        // Extract user data from response
         const userData: User = {
           id: response.user?.id,
           username: response.user?.username,
@@ -114,8 +112,6 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
       const response = await api.register(username, email, password)
       
       if (response.success) {
-        // Registration successful, but user still needs to login
-        // Role will be set to USER by default
         const userData: User = {
           id: response.user?.id,
           username: response.user?.username,
