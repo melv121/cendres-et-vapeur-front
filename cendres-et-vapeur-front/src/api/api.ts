@@ -79,7 +79,6 @@ const deleteUser = async (id: number) => {
   return response.json();
 };
 
-// ============ PRODUITS ============
 
 const getProducts = async () => {
   const response = await fetch(`${API_BASE_URL}/products`, {
@@ -99,9 +98,6 @@ const getProductById = async (id: number) => {
 
 const createProduct = async (productData: any) => {
   const headers = getHeaders();
-  console.log('Token envoyé:', localStorage.getItem('cev_auth_token'));
-  console.log('Headers:', headers);
-  console.log('Payload:', productData);
 
   const response = await fetch(`${API_BASE_URL}/products`, {
     method: 'POST',
@@ -109,12 +105,9 @@ const createProduct = async (productData: any) => {
     body: JSON.stringify(productData),
   });
 
-  console.log('Response status:', response.status);
 
-  // Gérer les erreurs HTTP
   if (!response.ok) {
     const text = await response.text();
-    console.log('Error response:', text);
     try {
       const errorData = JSON.parse(text);
       throw new Error(errorData.detail || `Erreur ${response.status}`);
@@ -181,9 +174,6 @@ const Purchase = async (id: number) => {
   return response.json();
 };
 
-
-// ============ ORDERS ============
-
 const getOrders = async () => {
   const response = await fetch(`${API_BASE_URL}/orders`, {
     headers: getHeaders(),
@@ -238,8 +228,6 @@ const deleteOrder = async (id: number) => {
   });
   return response.json();
 };
-
-// ============ PANIER (CART) ============
 
 const addToCart = async (userId: number, productId: number, quantity: number = 1) => {
   const response = await fetch(`${API_BASE_URL}/orders/cart/add?user_id=${userId}`, {
@@ -348,8 +336,6 @@ const removeDiscount = async (orderId: number) => {
   }
   return response.json();
 };
-
-// ============ AUTH ============
 
 const login = async (email: string, password: string) => {
   const response = await fetch(`${API_BASE_URL}/api/auth/login/`, {
@@ -475,13 +461,19 @@ export const deleteOrderItems = async (id: number) => {
   return response.json();
 };
 
-export const voteProduct = async (productId: number, vote: number) => {
+export const voteProduct = async (productId: number, vote: any) => {
   const response = await fetch(`${API_BASE_URL}/products/${productId}/vote/`, {
     method: 'POST',
-
     headers: getHeaders(),
-    body: JSON.stringify({ vote }),
+    body: JSON.stringify(vote),
   });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Erreur API voteProduct:', response.status, errorText);
+    throw new Error(`Erreur ${response.status}: ${errorText}`);
+  }
+
   return response.json();
 };
 
@@ -578,7 +570,6 @@ export const getLogsByUser = async (id: number) => {
 };
 
 
-// ============ DASHBOARD ============
 
 export const getDashboardStats = async () => {
   const [users, orders, products] = await Promise.all([
@@ -590,7 +581,6 @@ export const getDashboardStats = async () => {
   const paidOrders = (orders || []).filter((o: any) => o.status === 'paid');
   const totalRevenue = paidOrders.reduce((sum: number, o: any) => sum + (o.total_amount || 0), 0);
 
-  // Orders last 7 days
   const now = Date.now();
   const ordersLast7Days = [];
   for (let i = 6; i >= 0; i--) {
@@ -605,7 +595,6 @@ export const getDashboardStats = async () => {
     ordersLast7Days.push({ date: dayStart.toISOString(), count });
   }
 
-  // Top 5 products by price
   const top5 = [...(products || [])]
     .sort((a: any, b: any) => (b.current_price || 0) - (a.current_price || 0))
     .slice(0, 5);
@@ -619,18 +608,15 @@ export const getDashboardStats = async () => {
   };
 };
 
-// ============ EXPORTS ============
 
 export {
   API_BASE_URL,
   getHeaders,
-  // Users
   getUsers,
   getUserById,
   createUser,
   updateUser,
   deleteUser,
-  // Products
   getProducts,
   getProductById,
   createProduct,
@@ -639,27 +625,21 @@ export {
   getPriceInfos,
   View,
   Purchase,
-  // Orders
   getOrders,
   getOrderById,
   createOrder,
   updateOrder,
   deleteOrder,
-  // Cart
   addToCart,
   getUserCart,
   emptyCart,
   updateCartItemQuantity,
   removeFromCart,
-  // Payment & Invoice
   downloadInvoice,
   processPayment,
   applyDiscount,
   removeDiscount,
-  // Auth
   login,
   verify2FA,
   register,
 };
-
-

@@ -24,12 +24,6 @@ import CalendarPage from "./pages/admin/CalendarPage";
 import NotAuthorized from "./pages/NotAuthorized";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import { useToxicityMonitor } from "./hooks/useToxicityMonitor";
-
-<<<<<<< yassine
-=======
-
->>>>>>> develop
-// Composants admin directs (avec API)
 import AdminProducts from "./components/admin/AdminProduct";
 import AdminUsers from "./components/admin/AdminUsers";
 
@@ -39,9 +33,6 @@ const Roles = {
   USER: "USER",
   GUEST: "GUEST",
 };
-
-
-
 
 import "./App.css";
 
