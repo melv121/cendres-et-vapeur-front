@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import type { Product } from '../types/Product';
 import { productService } from '../services/productService';
 import { addToCart } from '../api/api';
+import { ProductImage } from '../components/ProductImage';
 
 const Home: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -100,7 +101,7 @@ const Home: React.FC = () => {
               {products.map((product) => (
                 <div key={product.id} className="product-card">
                   <div className="product-image">
-                    <img src={product.image} alt={product.name} />
+                    <ProductImage src={product.image} alt={product.name} />
                   </div>
                   <div className="product-info">
                     <h3>{product.name}</h3>

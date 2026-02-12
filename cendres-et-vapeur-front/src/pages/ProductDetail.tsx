@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { Product } from '../types/Product';
-import { productService } from '../services/productService';
 import { getShopProductById } from '../services/productShop';
 import { addToCart, voteProduct, getProductVotes } from '../api/api';
+import { ProductImage } from '../components/ProductImage';
 import '../styles/ProductDetail.css';
 
 interface Comment {
@@ -242,8 +242,8 @@ const ProductDetail = () => {
 
         <div className="product-detail-container">
           <div className="product-image-section">
-            {product.image && product.image.trim() ? (
-              <img src={product.image} alt={product.name} className="product-image-large" />
+            {product?.image ? (
+              <ProductImage src={product.image} alt={product.name} className="product-image-large" />
             ) : (
               <div className="image-placeholder-large">
                 <span>IMAGE PRODUIT</span>

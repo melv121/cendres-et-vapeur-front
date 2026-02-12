@@ -11,6 +11,25 @@ const getHeaders = (): HeadersInit => {
   return headers;
 };
 
+// Load images with authentication
+const getAuthenticatedImageUrl = async (imageUrl: string): Promise<string> => {
+  try {
+    const response = await fetch(imageUrl, {
+      headers: getHeaders(),
+    });
+
+    if (!response.ok) {
+      console.warn(`Failed to load image: ${response.status}`);
+      return '';
+    }
+
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
+  } catch (error) {
+    console.error('Error loading authenticated image:', error);
+    return '';
+  }
+};
 
 const getUsers = async () => {
   const response = await fetch(`${API_BASE_URL}/users`, {
@@ -319,6 +338,44 @@ const removeFromCart = async (userId: number, productId: number) => {
   });
   if (!response.ok) {
     throw new Error(`Erreur ${response.status}`);
+  }
+  return response.json();
+};
+
+const checkoutOrder = async (orderId: number) => {
+  const response = await fetch(`${API_BASE_URL}/orders/${orderId}/checkout`, {
+    method: 'POST',
+    headers: getHeaders(),
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    try { throw new Error(JSON.parse(text).detail || `Erreur ${response.status}`); }
+    catch { throw new Error(`Erreur ${response.status}: ${text}`); }
+  }
+  return response.json();
+};
+
+const confirmOrderDetails = async (orderId: number, shippingAddress: any, billingAddress: any) => {
+  const payload = {
+    shipping_address: shippingAddress?.street || '',
+    shipping_city: shippingAddress?.city || '',
+    shipping_postal_code: shippingAddress?.postal_code || '',
+    shipping_country: shippingAddress?.country || '',
+    billing_address: billingAddress?.street || '',
+    billing_city: billingAddress?.city || '',
+    billing_postal_code: billingAddress?.postal_code || '',
+    billing_country: billingAddress?.country || '',
+  };
+
+  const response = await fetch(`${API_BASE_URL}/orders/${orderId}/confirm-details`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    try { throw new Error(JSON.parse(text).detail || `Erreur ${response.status}`); }
+    catch { throw new Error(`Erreur ${response.status}: ${text}`); }
   }
   return response.json();
 };
@@ -686,6 +743,7 @@ export const uploadProductImage = async (productId: number, file: File) => {
 export {
   API_BASE_URL,
   getHeaders,
+  getAuthenticatedImageUrl,
   getUsers,
   getUserById,
   createUser,
@@ -709,6 +767,8 @@ export {
   emptyCart,
   updateCartItemQuantity,
   removeFromCart,
+  checkoutOrder,
+  confirmOrderDetails,
   downloadInvoice,
   processPayment,
   applyDiscount,

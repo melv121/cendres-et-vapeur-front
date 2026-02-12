@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { getUserCart, getProductById, updateCartItemQuantity, removeFromCart, emptyCart, updateOrder } from '../api/api';
+import { getUserCart, getProductById, updateCartItemQuantity, removeFromCart, emptyCart, checkoutOrder, confirmOrderDetails, processPayment } from '../api/api';
+import { ProductImage } from '../components/ProductImage';
 import '../styles/Cart.css';
 
 interface CartItem {
@@ -14,6 +15,13 @@ interface CartItem {
   stock: number;
 }
 
+interface Address {
+  street: string;
+  city: string;
+  postal_code: string;
+  country: string;
+}
+
 const Cart = () => {
   const navigate = useNavigate();
 
@@ -22,9 +30,23 @@ const Cart = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [showPayment, setShowPayment] = useState(false);
+  const [step, setStep] = useState<'cart' | 'checkout' | 'address' | 'payment'>('cart');
   const [paying, setPaying] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+
+  const [shippingAddress, setShippingAddress] = useState<Address>({
+    street: '',
+    city: '',
+    postal_code: '',
+    country: 'France',
+  });
+
+  const [billingAddress, setBillingAddress] = useState<Address>({
+    street: '',
+    city: '',
+    postal_code: '',
+    country: 'France',
+  });
 
   const getUserId = (): number | null => {
     const userStr = localStorage.getItem('cev_auth_user');
@@ -152,24 +174,44 @@ const Cart = () => {
     return calculateSubtotal() + calculateShipping();
   };
 
-  const handleCheckout = () => {
-    if (cartItems.length === 0) return;
-    setShowPayment(true);
+  const handleCheckout = async () => {
+    if (cartItems.length === 0 || !orderId) return;
+    setError(null);
+    try {
+      // Étape 1: CART → PENDING (checkout)
+      await checkoutOrder(orderId);
+      setStep('address');
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors du checkout');
+    }
+  };
+
+  const handleConfirmAddress = async () => {
+    if (!orderId) return;
+    setError(null);
+    try {
+      // Étape 2: PENDING → CONFIRMED (confirm details)
+      await confirmOrderDetails(orderId, shippingAddress, billingAddress);
+      setStep('payment');
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors de la confirmation des adresses');
+    }
   };
 
   const handleConfirmPayment = async () => {
-    if (!orderId || !userId) return;
+    if (!orderId) return;
     setPaying(true);
     setError(null);
     try {
-      await updateOrder(orderId, {
-        status: 'paid',
-        total_amount: calculateTotal(),
-        user_id: userId,
-      });
+      // Étape 3: CONFIRMED → PAID (payment)
+      const userStr = localStorage.getItem('cev_auth_user');
+      const user = userStr ? JSON.parse(userStr) : null;
+      const paypalEmail = user?.email || 'user@example.com';
+
+      await processPayment(orderId, paypalEmail);
       setPaymentSuccess(true);
       setCartItems([]);
-      setShowPayment(false);
+      setStep('cart');
       window.dispatchEvent(new Event('cartUpdated'));
     } catch (err: any) {
       setError(err.message || 'Erreur lors du paiement');
@@ -281,7 +323,7 @@ const Cart = () => {
                   <div className="cart-item-info">
                     <div className="cart-item-image">
                       {item.image ? (
-                        <img src={item.image} alt={item.name} />
+                        <ProductImage src={item.image} alt={item.name} />
                       ) : (
                         <div className="image-placeholder">IMG</div>
                       )}
@@ -364,7 +406,7 @@ const Cart = () => {
                 <span className="total-amount">{calculateTotal().toFixed(2)} €</span>
               </div>
 
-              {!showPayment ? (
+              {step === 'cart' && (
                 <>
                   <button onClick={handleCheckout} className="btn-checkout">
                     Procéder au paiement
@@ -374,7 +416,80 @@ const Cart = () => {
                     <span>Paiement 100% sécurisé</span>
                   </div>
                 </>
-              ) : (
+              )}
+
+              {step === 'address' && (
+                <div className="address-form">
+                  <div className="summary-divider"></div>
+
+                  <h3 style={{ color: '#cd7f32', marginBottom: 12 }}>Adresse de livraison</h3>
+                  <input
+                    type="text"
+                    placeholder="Rue"
+                    value={shippingAddress.street}
+                    onChange={(e) => setShippingAddress({ ...shippingAddress, street: e.target.value })}
+                    className="address-input"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Ville"
+                    value={shippingAddress.city}
+                    onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
+                    className="address-input"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Code postal"
+                    value={shippingAddress.postal_code}
+                    onChange={(e) => setShippingAddress({ ...shippingAddress, postal_code: e.target.value })}
+                    className="address-input"
+                  />
+
+                  <h3 style={{ color: '#cd7f32', marginBottom: 12, marginTop: 20 }}>Adresse de facturation</h3>
+                  <input
+                    type="text"
+                    placeholder="Rue"
+                    value={billingAddress.street}
+                    onChange={(e) => setBillingAddress({ ...billingAddress, street: e.target.value })}
+                    className="address-input"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Ville"
+                    value={billingAddress.city}
+                    onChange={(e) => setBillingAddress({ ...billingAddress, city: e.target.value })}
+                    className="address-input"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Code postal"
+                    value={billingAddress.postal_code}
+                    onChange={(e) => setBillingAddress({ ...billingAddress, postal_code: e.target.value })}
+                    className="address-input"
+                  />
+
+                  {error && <p style={{ color: '#d4955f', marginTop: 12 }}>{error}</p>}
+
+                  <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
+                    <button
+                      onClick={() => { setStep('cart'); setError(null); }}
+                      className="btn-primary"
+                      style={{ flex: 1, padding: 12 }}
+                    >
+                      Retour
+                    </button>
+                    <button
+                      onClick={handleConfirmAddress}
+                      className="btn-checkout"
+                      style={{ flex: 1 }}
+                    >
+                      Continuer vers le paiement
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {step === 'payment' && (
                 <div className="payment-form">
                   <div className="summary-divider"></div>
 
@@ -388,11 +503,11 @@ const Cart = () => {
 
                   <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                     <button
-                      onClick={() => { setShowPayment(false); setError(null); }}
+                      onClick={() => { setStep('address'); setError(null); }}
                       className="btn-primary"
                       style={{ flex: 1, padding: 12 }}
                     >
-                      Annuler
+                      Retour
                     </button>
                     <button
                       onClick={handleConfirmPayment}
@@ -400,7 +515,7 @@ const Cart = () => {
                       disabled={paying}
                       style={{ flex: 1 }}
                     >
-                      {paying ? 'Paiement en cours…' : 'Confirmer le paiement'}
+                      {paying ? 'Traitement…' : 'Confirmer le paiement'}
                     </button>
                   </div>
                 </div>
