@@ -475,13 +475,19 @@ export const deleteOrderItems = async (id: number) => {
   return response.json();
 };
 
-export const voteProduct = async (productId: number, vote: number) => {
+export const voteProduct = async (productId: number, vote: any) => {
   const response = await fetch(`${API_BASE_URL}/products/${productId}/vote/`, {
     method: 'POST',
-
     headers: getHeaders(),
-    body: JSON.stringify({ vote }),
+    body: JSON.stringify(vote),
   });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Erreur API voteProduct:', response.status, errorText);
+    throw new Error(`Erreur ${response.status}: ${errorText}`);
+  }
+
   return response.json();
 };
 
