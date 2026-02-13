@@ -1,14 +1,25 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type { Product } from '../types/Product';
 import { getAllShopProducts } from '../services/productShop';
+import { addToCart } from '../api/api';
+import { ProductImage } from '../components/ProductImage';
+import { useNotification } from '../contexts/NotificationContext';
 import '../styles/Shop.css';
+
+function formatEUR(n: number | undefined | null) {
+  const value = Number(n || 0);
+  return value.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
+}
 
 const Shop = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [addingId, setAddingId] = useState<number | null>(null);
 
   const [search, setSearch] = useState("");
+  const navigate = useNavigate();
+  const { success, error: showError } = useNotification();
 
   useEffect(() => {
     loadProducts();
@@ -23,6 +34,27 @@ const Shop = () => {
       console.error('Erreur lors du chargement des produits:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddToCart = async (e: React.MouseEvent, productId: number) => {
+    e.preventDefault();
+    const userStr = localStorage.getItem('cev_auth_user');
+    const token = localStorage.getItem('cev_auth_token');
+    if (!userStr || !token) {
+      navigate('/login');
+      return;
+    }
+    try {
+      const user = JSON.parse(userStr);
+      setAddingId(productId);
+      await addToCart(user.id, productId, 1);
+      window.dispatchEvent(new Event('cartUpdated'));
+      success('Produit ajouté au panier');
+    } catch (err: any) {
+      showError(err.message || 'Erreur lors de l\'ajout au panier');
+    } finally {
+      setAddingId(null);
     }
   };
 
@@ -42,7 +74,7 @@ const Shop = () => {
       <section className="shop-header">
         <h1>Boutique</h1>
         <p className="shop-subtitle">Tous les articles disponibles dans la colonie</p>
-        
+
         <div className="shop-search">
           <input
             type="text"
@@ -93,7 +125,7 @@ const Shop = () => {
 
                       <div className="product-image">
                         {product.image ? (
-                          <img src={product.image} alt={product.name} />
+                          <ProductImage src={product.image} alt={product.name} />
                         ) : (
                           <div className="image-placeholder">IMAGE</div>
                         )}
@@ -103,13 +135,22 @@ const Shop = () => {
                       <p className="product-description">{product.description}</p>
 
                       <div className="price-section">
-                        <div className="product-price">{product.current_price} €</div>
+                        <div className="product-price">{formatEUR(product.current_price || product.base_price)}</div>
                         <div className="product-popularity">
                           {product.popularity_score}
                         </div>
                       </div>
 
-                      <button className="btn-primary">Voir les détails</button>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button className="btn-primary">Voir les détails</button>
+                        <button
+                          className="btn-primary"
+                          onClick={(e) => handleAddToCart(e, product.id)}
+                          disabled={addingId === product.id || product.stock === 0}
+                        >
+                          {addingId === product.id ? '...' : 'Ajouter'}
+                        </button>
+                      </div>
                     </div>
                   </Link>
                 ))

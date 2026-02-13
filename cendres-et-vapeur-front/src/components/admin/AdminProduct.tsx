@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import EditProductModal from "./modals/EditProductModal";
 import { getProducts, createProduct, updateProduct, deleteProduct } from "../../api/api";
+import { useNotification } from "../../contexts/NotificationContext";
 import "./admin.css";
 
 export type Product = {
@@ -11,6 +12,7 @@ export type Product = {
   stock: number;
   category_id?: number;
   status: "ACTIVE" | "HIDDEN";
+  image_url?: string;
 };
 
 export default function AdminProducts() {
@@ -19,18 +21,16 @@ export default function AdminProducts() {
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Product | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const { success, error: showError, confirm: showConfirm } = useNotification();
 
   const total = useMemo(() => rows.length, [rows]);
 
-  // Charger les produits depuis l'API
   const fetchProducts = async () => {
     setLoading(true);
     setError(null);
     try {
       const response = await getProducts();
-      // L'API retourne directement un tableau de produits
       const data = Array.isArray(response) ? response : (response.products || []);
-      // Adapter les données de l'API au format du composant
       const products = data.map((product: any) => ({
         id: product.id,
         name: product.name || 'Sans nom',
@@ -47,24 +47,12 @@ export default function AdminProducts() {
     }
   };
 
-  // Charger les données au montage du composant
   useEffect(() => {
     fetchProducts();
   }, []);
 
-  // Créer un nouveau produit
   const onCreate = async (p: Omit<Product, 'id'>) => {
     try {
-      console.log('Création produit avec:', {
-        name: p.name,
-        description: p.description || '',
-        category_id: p.category_id || 1,
-        stock: Number(p.stock),
-        base_price: Number(p.price),
-        current_price: Number(p.price),
-        popularity_score: 0,
-      });
-      
       const newProduct = await createProduct({
         name: p.name,
         description: p.description || '',
@@ -75,10 +63,7 @@ export default function AdminProducts() {
         current_price: Number(p.price),
         popularity_score: 0,
       });
-      
-      console.log('Produit créé:', newProduct);
-      
-      // Ajouter le nouveau produit à la liste
+
       setRows((prev) => [...prev, {
         id: newProduct.id,
         name: newProduct.name,
@@ -91,13 +76,12 @@ export default function AdminProducts() {
       setIsCreating(false);
     } catch (err: any) {
       console.error('Erreur création produit:', err);
-      alert('Erreur lors de la création: ' + err.message);
+      showError('Erreur lors de la création: ' + err.message);
     }
   };
 
   const onSave = async (p: Product) => {
     try {
-      // L'API exige TOUS les champs pour la mise à jour
       await updateProduct(p.id, {
         name: p.name,
         description: p.description || '',
@@ -112,24 +96,28 @@ export default function AdminProducts() {
       setSelected(null);
     } catch (err: any) {
       console.error('Erreur mise à jour produit:', err);
-      alert('Erreur lors de la sauvegarde: ' + err.message);
+      showError('Erreur lors de la sauvegarde: ' + err.message);
     }
   };
 
   const onDelete = async (id: number) => {
-    if (!confirm('Supprimer ce produit ?')) return;
-    try {
-      await deleteProduct(id);
-      setRows((prev) => prev.filter((x) => x.id !== id));
-    } catch (err: any) {
-      alert('Erreur lors de la suppression: ' + err.message);
-    }
+    showConfirm('Supprimer ce produit ?', {
+      onConfirm: async () => {
+        try {
+          await deleteProduct(id);
+          setRows((prev) => prev.filter((x) => x.id !== id));
+          success('Produit supprimé');
+        } catch (err: any) {
+          showError('Erreur lors de la suppression: ' + err.message);
+        }
+      },
+    });
   };
 
   if (loading) {
     return (
       <div className="admBlock">
-        <p style={{ textAlign: 'center', padding: '2rem' }}>Chargement des produits...</p>
+        <p style={{ textAlign: 'center', padding: '2rem', color: '#d4955f' }}>Chargement des produits...</p>
       </div>
     );
   }
@@ -195,9 +183,8 @@ export default function AdminProducts() {
                 <td>{r.stock}</td>
                 <td>
                   <span
-                    className={`pill ${
-                      r.status === "ACTIVE" ? "ok" : "warn"
-                    }`}
+                    className={`pill ${r.status === "ACTIVE" ? "ok" : "warn"
+                      }`}
                   >
                     {r.status}
                   </span>

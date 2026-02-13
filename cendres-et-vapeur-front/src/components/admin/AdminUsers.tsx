@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { getUsers, createUser, updateUser, deleteUser } from "../../api/api";
+import { useNotification } from "../../contexts/NotificationContext";
 
 type Mode = "create" | "edit";
 
@@ -20,53 +21,16 @@ type UserCreate = {
   biography?: string | null;
 };
 
-type UserUpdate = {
-  username: string;
-  email: string;
-  password?: string;
-  avatar_url?: string | null;
-  biography?: string | null;
-  role?: string;
-};
-
-const usersSeed: UserOut[] = [
-  {
-    id: 1,
-    username: "admin.valdrak",
-    email: "admin@valdrak.io",
-    role: "admin",
-    avatar_url: "",
-    biography: "Superviseur — accès complet.",
-  },
-  {
-    id: 2,
-    username: "editor.steam",
-    email: "editor@valdrak.io",
-    role: "editor",
-    avatar_url: "",
-    biography: "Éditeur — gestion contenu.",
-  },
-  {
-    id: 3,
-    username: "user.cendres",
-    email: "user@valdrak.io",
-    role: "user",
-    avatar_url: "",
-    biography: "Compte client.",
-  },
-];
-
 const emptyCreate: UserCreate & { role?: string } = {
   username: "",
   email: "",
   password: "",
-  avatar_url: "",
+  avatar_url: null,
   biography: "",
   role: "user",
 };
 
 export default function AdminUsersStatic() {
-  // ✅ Connecté à l'API
   const [users, setUsers] = useState<UserOut[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -78,8 +42,19 @@ export default function AdminUsersStatic() {
   const [editingId, setEditingId] = useState<number | null>(null);
 
   const [form, setForm] = useState<UserCreate & { role?: string }>(emptyCreate);
+  const { success, confirm: showConfirm } = useNotification();
 
-  // Charger les utilisateurs depuis l'API
+  const isCurrentAdmin = (() => {
+    try {
+      const u = localStorage.getItem('cev_auth_user');
+      if (!u) return false;
+      const obj = JSON.parse(u);
+      return String(obj.role).toUpperCase() === 'ADMIN';
+    } catch {
+      return false;
+    }
+  })();
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -124,7 +99,7 @@ export default function AdminUsersStatic() {
     setForm({
       username: u.username,
       email: u.email,
-      password: "", // optionnel en edit
+      password: "",
       avatar_url: u.avatar_url ?? "",
       biography: u.biography ?? "",
       role: u.role,
@@ -136,7 +111,6 @@ export default function AdminUsersStatic() {
     try {
       setError(null);
 
-      // validations simples
       if (!form.username.trim()) {
         setError("Le username est obligatoire.");
         return;
@@ -152,31 +126,33 @@ export default function AdminUsersStatic() {
           return;
         }
 
-        // Appel API pour créer l'utilisateur
         const created = await createUser({
           username: form.username.trim(),
           email: form.email.trim(),
           password: form.password.trim(),
           avatar_url: form.avatar_url?.trim() || null,
           biography: form.biography?.trim() || null,
+          role: (form.role || 'user').toLowerCase(),
         });
 
         setUsers((prev) => [created, ...prev]);
+        try { window.dispatchEvent(new Event('dataChanged')); } catch (_) { }
       } else {
         if (!editingId) return;
 
-        // Appel API pour mettre à jour l'utilisateur
-        const payload: UserUpdate = {
+        const payload: any = {
           username: form.username.trim(),
           email: form.email.trim(),
           avatar_url: form.avatar_url?.trim() || null,
           biography: form.biography?.trim() || null,
         };
 
-        // si password rempli → update password
-        if (form.password?.trim()) payload.password = form.password.trim();
+        payload.password = form.password?.trim() || "UNCHANGED";
 
-        const updated = await updateUser(editingId, payload);
+        if (form.role?.trim()) payload.role = form.role.trim().toLowerCase();
+
+        console.log('Update payload:', payload);
+        await updateUser(editingId, payload);
 
         setUsers((prev) =>
           prev.map((u) =>
@@ -192,31 +168,37 @@ export default function AdminUsersStatic() {
               : u
           )
         );
+        try { window.dispatchEvent(new Event('dataChanged')); } catch (_) { }
       }
 
       setOpen(false);
     } catch (e: any) {
-      setError("Erreur lors de l’enregistrement.");
+      console.error('Create/update user failed', e);
+      console.error('Full error:', JSON.stringify(e, null, 2));
+      setError(e?.message || e?.toString() || "Erreur lors de l'enregistrement.");
     }
   }
 
   async function onDelete(id: number) {
-    const ok = confirm("Supprimer cet utilisateur ?");
-    if (!ok) return;
-
-    try {
-      await deleteUser(id);
-      setUsers((prev) => prev.filter((u) => u.id !== id));
-    } catch (err: any) {
-      console.error('Erreur suppression user:', err);
-      setError("Erreur lors de la suppression.");
-    }
+    showConfirm("Supprimer cet utilisateur ?", {
+      onConfirm: async () => {
+        try {
+          await deleteUser(id);
+          setUsers((prev) => prev.filter((u) => u.id !== id));
+          success("Utilisateur supprimé");
+          try { window.dispatchEvent(new Event('dataChanged')); } catch (_) { }
+        } catch (err: any) {
+          console.error('Erreur suppression user:', err);
+          setError("Erreur lors de la suppression.");
+        }
+      },
+    });
   }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       {loading && (
-        <div style={{ padding: 20, textAlign: 'center' }}>
+        <div style={{ padding: 20, textAlign: 'center', color: '#d4955f' }}>
           Chargement des utilisateurs...
         </div>
       )}
@@ -237,9 +219,11 @@ export default function AdminUsersStatic() {
           style={{ padding: 10, borderRadius: 10, minWidth: 260, backgroundColor: "rgba(26,20,16,.8)", color: "#e8dcc8", border: "1px solid rgba(184, 115, 51, 0.3)" }}
         />
 
-        <button onClick={openCreate} style={{ padding: "10px 14px", borderRadius: 10, backgroundColor: "#8b5a2b", color: "#e8dcc8", border: "1px solid #b87333" }}>
-          + Nouvel utilisateur
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={openCreate} style={{ padding: "10px 14px", borderRadius: 10, backgroundColor: "#8b5a2b", color: "#e8dcc8", border: "1px solid #b87333" }}>
+            + Nouvel utilisateur
+          </button>
+        </div>
       </div>
 
       {error && (

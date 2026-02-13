@@ -499,6 +499,36 @@
   }
 }
 
+/* Address Form */
+.address-form {
+  margin-top: 1.5rem;
+}
+
+.address-input {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(205, 127, 50, 0.3);
+  color: #e8dcc8;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.address-input:focus {
+  outline: none;
+  border-color: #cd7f32;
+  background: rgba(205, 127, 50, 0.1);
+  box-shadow: 0 0 10px rgba(205, 127, 50, 0.2);
+}
+
+.address-input::placeholder {
+  color: rgba(232, 220, 200, 0.5);
+}
+
 @media (max-width: 640px) {
   .container {
     padding: 0 1rem;
@@ -528,5 +558,151 @@
   .image-placeholder {
     width: 100%;
     height: 150px;
+  }
+}
+
+/* Order Success Summary */
+.order-summary {
+  background: rgba(76, 175, 80, 0.1);
+  border: 2px solid rgba(76, 175, 80, 0.5);
+  border-radius: 12px;
+  padding: 2rem;
+  margin: 2rem 0;
+  color: #81c784;
+}
+
+.order-summary h3 {
+  margin-top: 0;
+  color: #66bb6a;
+  font-family: 'Georgia', serif;
+}
+
+.order-items-success {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.order-item-success {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #66bb6a;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: center;
+}
+
+.item-info {
+  color: #e0e0e0;
+}
+
+.item-info strong {
+  display: block;
+  color: #66bb6a;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.item-info p {
+  margin: 0.25rem 0;
+  color: #b0bec5;
+  font-size: 0.9rem;
+}
+
+.item-updates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.stock-update,
+.price-update {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.75rem;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.stock-update .label,
+.price-update .label {
+  display: block;
+  color: #90caf9;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
+.stock-update .value,
+.price-update .value {
+  display: block;
+  color: #66bb6a;
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
+.trend-label {
+  display: inline-block;
+  font-size: 0.8rem;
+  margin-left: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.trend-label.trend-up {
+  background: rgba(76, 175, 80, 0.3);
+  color: #81c784;
+}
+
+.trend-label.trend-down {
+  background: rgba(244, 67, 54, 0.3);
+  color: #f44336;
+}
+
+.trend-label.trend-stable {
+  background: rgba(158, 158, 158, 0.3);
+  color: #bdbdbd;
+}
+
+.price-dynamics {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dynamic-info {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.75rem;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.dynamic-info .label {
+  display: block;
+  color: #90caf9;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
+.dynamic-info .value {
+  display: block;
+  color: #ffb74d;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .order-item-success {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .item-updates {
+    grid-template-columns: 1fr;
   }
 }

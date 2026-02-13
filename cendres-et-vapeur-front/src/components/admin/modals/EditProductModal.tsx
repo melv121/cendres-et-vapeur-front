@@ -1,5 +1,7 @@
 import { useState } from "react";
 import type { Product } from "../AdminProduct";
+import { uploadProductImage } from "../../../api/api";
+import { useNotification } from "../../../contexts/NotificationContext";
 import "../admin.css";
 
 type EditProductModalProps = {
@@ -25,25 +27,47 @@ export default function EditProductModal({
   onSave,
   onCreate,
 }: EditProductModalProps) {
+  const { success, error: showError } = useNotification();
   const isCreating = product === null;
   const [form, setForm] = useState<Omit<Product, 'id'> & { id?: number }>(
     product ? { ...product } : { ...defaultProduct }
   );
   const [saving, setSaving] = useState(false);
   const [imagePreview, setImagePreview] = useState<string>(product?.image_url || '');
+  const [uploading, setUploading] = useState(false);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
-        alert('Image trop volumineuse (max 2MB)');
+        showError('Image trop volumineuse (max 2MB)');
         return;
       }
+
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64 = reader.result as string;
-        setForm({ ...form, image_url: base64 });
         setImagePreview(base64);
+
+        // Si le produit existe déjà, uploader l'image immédiatement
+        if (product?.id) {
+          setUploading(true);
+          uploadProductImage(product.id, file)
+            .then((result) => {
+              setForm({ ...form, image_url: result.image_url || `/products/${product.id}/image` });
+              success('Image uploadée avec succès!');
+            })
+            .catch((err) => {
+              console.error('Erreur upload:', err);
+              showError('Erreur lors de l\'upload: ' + (err as any).message);
+            })
+            .finally(() => {
+              setUploading(false);
+            });
+        } else {
+          // Pour un nouveau produit, on stocke juste en base64
+          setForm({ ...form, image_url: base64 });
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -56,12 +80,12 @@ export default function EditProductModal({
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!form.name.trim()) {
-      alert('Le nom du produit est requis');
+      showError('Le nom du produit est requis');
       return;
     }
-    
+
     setSaving(true);
     try {
       if (isCreating && onCreate) {
@@ -162,12 +186,13 @@ export default function EditProductModal({
             Image du produit
             <div className="image-upload-section">
               <div className="image-upload-buttons">
-                <label className="admBtn ghost" style={{ cursor: 'pointer', display: 'inline-block' }}>
-                  📁 Choisir un fichier
+                <label className="admBtn ghost" style={{ cursor: uploading ? 'not-allowed' : 'pointer', display: 'inline-block', opacity: uploading ? 0.6 : 1 }}>
+                  {uploading ? '⏳ Upload...' : '📁 Choisir un fichier'}
                   <input
                     type="file"
                     accept="image/*"
                     onChange={handleImageUpload}
+                    disabled={uploading}
                     style={{ display: 'none' }}
                   />
                 </label>
@@ -181,15 +206,15 @@ export default function EditProductModal({
               />
               {imagePreview && (
                 <div className="image-preview" style={{ marginTop: '10px' }}>
-                  <img 
-                    src={imagePreview} 
-                    alt="Aperçu" 
+                  <img
+                    src={imagePreview}
+                    alt="Aperçu"
                     style={{ maxWidth: '100%', maxHeight: '150px', border: '2px solid #8b5a2b' }}
                     onError={() => setImagePreview('')}
                   />
-                  <button 
-                    type="button" 
-                    className="admBtn ghost" 
+                  <button
+                    type="button"
+                    className="admBtn ghost"
                     onClick={() => { setForm({ ...form, image_url: '' }); setImagePreview(''); }}
                     style={{ marginTop: '8px' }}
                   >
