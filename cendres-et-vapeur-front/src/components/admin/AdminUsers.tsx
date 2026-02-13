@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { getUsers, createUser, updateUser, deleteUser } from "../../api/api";
+import { useNotification } from "../../contexts/NotificationContext";
 
 type Mode = "create" | "edit";
 
@@ -41,6 +42,7 @@ export default function AdminUsersStatic() {
   const [editingId, setEditingId] = useState<number | null>(null);
 
   const [form, setForm] = useState<UserCreate & { role?: string }>(emptyCreate);
+  const { success, confirm: showConfirm } = useNotification();
 
   const isCurrentAdmin = (() => {
     try {
@@ -97,7 +99,7 @@ export default function AdminUsersStatic() {
     setForm({
       username: u.username,
       email: u.email,
-      password: "", 
+      password: "",
       avatar_url: u.avatar_url ?? "",
       biography: u.biography ?? "",
       role: u.role,
@@ -178,17 +180,19 @@ export default function AdminUsersStatic() {
   }
 
   async function onDelete(id: number) {
-    const ok = confirm("Supprimer cet utilisateur ?");
-    if (!ok) return;
-
-    try {
-      await deleteUser(id);
-      setUsers((prev) => prev.filter((u) => u.id !== id));
-      try { window.dispatchEvent(new Event('dataChanged')); } catch (_) { }
-    } catch (err: any) {
-      console.error('Erreur suppression user:', err);
-      setError("Erreur lors de la suppression.");
-    }
+    showConfirm("Supprimer cet utilisateur ?", {
+      onConfirm: async () => {
+        try {
+          await deleteUser(id);
+          setUsers((prev) => prev.filter((u) => u.id !== id));
+          success("Utilisateur supprimé");
+          try { window.dispatchEvent(new Event('dataChanged')); } catch (_) { }
+        } catch (err: any) {
+          console.error('Erreur suppression user:', err);
+          setError("Erreur lors de la suppression.");
+        }
+      },
+    });
   }
 
   return (

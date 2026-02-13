@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { getUserCart, getProductById, updateCartItemQuantity, removeFromCart, emptyCart, updateOrder } from '../api/api';
+import { getUserCart, getProductById, updateCartItemQuantity, removeFromCart, emptyCart, checkoutOrder, confirmOrderDetails, processPayment, Purchase, getPriceInfos } from '../api/api';
+import { useNotification } from '../contexts/NotificationContext';
+import { ProductImage } from '../components/ProductImage';
 import '../styles/Cart.css';
 
 interface CartItem {
@@ -12,19 +14,43 @@ interface CartItem {
   price: number;
   quantity: number;
   stock: number;
+  priceInfo?: any;
+}
+
+interface Address {
+  street: string;
+  city: string;
+  postal_code: string;
+  country: string;
 }
 
 const Cart = () => {
   const navigate = useNavigate();
+  const { confirm: showConfirm, success } = useNotification();
 
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [orderId, setOrderId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [showPayment, setShowPayment] = useState(false);
+  const [step, setStep] = useState<'cart' | 'checkout' | 'address' | 'payment'>('cart');
   const [paying, setPaying] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [orderItems, setOrderItems] = useState<CartItem[]>([]);
+
+  const [shippingAddress, setShippingAddress] = useState<Address>({
+    street: '',
+    city: '',
+    postal_code: '',
+    country: 'France',
+  });
+
+  const [billingAddress, setBillingAddress] = useState<Address>({
+    street: '',
+    city: '',
+    postal_code: '',
+    country: 'France',
+  });
 
   const getUserId = (): number | null => {
     const userStr = localStorage.getItem('cev_auth_user');
@@ -126,15 +152,18 @@ const Cart = () => {
 
   const clearCart = async () => {
     if (!userId) return;
-    if (!window.confirm('Êtes-vous sûr de vouloir vider le panier ?')) return;
-
-    try {
-      await emptyCart(userId);
-      setCartItems([]);
-      window.dispatchEvent(new Event('cartUpdated'));
-    } catch (err: any) {
-      setError(err.message || 'Erreur lors du vidage du panier');
-    }
+    showConfirm('Êtes-vous sûr de vouloir vider le panier ?', {
+      onConfirm: async () => {
+        try {
+          await emptyCart(userId);
+          setCartItems([]);
+          success('Panier vidé');
+          window.dispatchEvent(new Event('cartUpdated'));
+        } catch (err: any) {
+          setError(err.message || 'Erreur lors du vidage du panier');
+        }
+      },
+    });
   };
 
   const calculateSubtotal = () => {
@@ -152,24 +181,67 @@ const Cart = () => {
     return calculateSubtotal() + calculateShipping();
   };
 
-  const handleCheckout = () => {
-    if (cartItems.length === 0) return;
-    setShowPayment(true);
+  const handleCheckout = async () => {
+    if (cartItems.length === 0 || !orderId) return;
+    setError(null);
+    try {
+      await checkoutOrder(orderId);
+      setStep('address');
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors du checkout');
+    }
+  };
+
+  const handleConfirmAddress = async () => {
+    if (!orderId) return;
+    setError(null);
+    try {
+      await confirmOrderDetails(orderId, shippingAddress, billingAddress);
+      setStep('payment');
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors de la confirmation des adresses');
+    }
   };
 
   const handleConfirmPayment = async () => {
-    if (!orderId || !userId) return;
+    if (!orderId) return;
     setPaying(true);
     setError(null);
     try {
-      await updateOrder(orderId, {
-        status: 'paid',
-        total_amount: calculateTotal(),
-        user_id: userId,
-      });
+      const userStr = localStorage.getItem('cev_auth_user');
+      const user = userStr ? JSON.parse(userStr) : null;
+      const paypalEmail = user?.email || 'user@example.com';
+
+      await processPayment(orderId, paypalEmail);
+
+      const updatedItems = await Promise.all(
+        cartItems.map(async (item) => {
+          try {
+            await Purchase(item.product_id, item.quantity);
+
+            const priceInfo = await getPriceInfos(item.product_id);
+
+            const priceChangePercent = priceInfo?.price_change_percent || 0;
+
+            const finalPrice = item.price * (1 + priceChangePercent / 100);
+
+            return {
+              ...item,
+              stock: priceInfo?.stock || 0,
+              price: finalPrice,
+              priceInfo: priceInfo || {},
+            };
+          } catch (err) {
+            return item;
+          }
+        })
+      );
+
+      setOrderItems(updatedItems);
       setPaymentSuccess(true);
       setCartItems([]);
-      setShowPayment(false);
+      setStep('cart');
+      success('Paiement confirmé ! Le stock et les prix ont été mis à jour.');
       window.dispatchEvent(new Event('cartUpdated'));
     } catch (err: any) {
       setError(err.message || 'Erreur lors du paiement');
@@ -183,8 +255,60 @@ const Cart = () => {
       <div className="cart-page">
         <div className="container">
           <div className="empty-cart">
-            <h2>Paiement réussi</h2>
-            <p>Votre commande a été confirmée. Une facture a été générée.</p>
+            <h2>✓ Paiement réussi</h2>
+            <p>Votre commande <strong>#{orderId}</strong> a été confirmée. Une facture a été générée.</p>
+
+            {orderItems.length > 0 && (
+              <div className="order-summary">
+                <h3>Mise à jour des stocks et prix:</h3>
+                <div className="order-items-success">
+                  {orderItems.map((item) => {
+                    const info = item.priceInfo as any;
+                    const priceChange = info?.price_change_percent || 0;
+                    const indicator = info?.indicator || { arrow: '', trend: 'STABLE' };
+                    const supplyRatio = info?.supply_ratio || 1;
+                    const demand = info?.demand || 0;
+
+                    return (
+                      <div key={item.product_id} className="order-item-success">
+                        <div className="item-info">
+                          <strong>{item.name}</strong>
+                          <p>Quantité achetée: {item.quantity}</p>
+                        </div>
+                        <div className="item-updates">
+                          <div className="stock-update">
+                            <span className="label">Stock restant:</span>
+                            <span className="value">{item.stock} unité(s)</span>
+                          </div>
+                          <div className="price-update">
+                            <span className="label">Nouveau prix:</span>
+                            <span className="value">{Number(item.price || 0).toFixed(2)}€ {indicator.arrow || ''}</span>
+                            {Math.abs(priceChange) > 0.1 && (
+                              <span className={`trend-label trend-${(indicator.trend || 'STABLE').toLowerCase()}`}>
+                                ({priceChange > 0 ? '+' : ''}{Number(priceChange).toFixed(2)}%)
+                              </span>
+                            )}
+                          </div>
+                          {info && Object.keys(info).length > 0 && (
+                            <div className="price-dynamics">
+                              <div className="dynamic-info">
+                                <span className="label">Offre/Demande:</span>
+                                <span className="value">{(Number(supplyRatio) * 100).toFixed(1)}%</span>
+                              </div>
+                              <div className="dynamic-info">
+                                <span className="label">Demande actuelle:</span>
+                                <span className="value">{demand}</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <button onClick={() => navigate('/shop')} className="btn-primary">
               Continuer mes achats
             </button>
@@ -281,7 +405,7 @@ const Cart = () => {
                   <div className="cart-item-info">
                     <div className="cart-item-image">
                       {item.image ? (
-                        <img src={item.image} alt={item.name} />
+                        <ProductImage src={item.image} alt={item.name} />
                       ) : (
                         <div className="image-placeholder">IMG</div>
                       )}
@@ -364,7 +488,7 @@ const Cart = () => {
                 <span className="total-amount">{calculateTotal().toFixed(2)} €</span>
               </div>
 
-              {!showPayment ? (
+              {step === 'cart' && (
                 <>
                   <button onClick={handleCheckout} className="btn-checkout">
                     Procéder au paiement
@@ -374,7 +498,80 @@ const Cart = () => {
                     <span>Paiement 100% sécurisé</span>
                   </div>
                 </>
-              ) : (
+              )}
+
+              {step === 'address' && (
+                <div className="address-form">
+                  <div className="summary-divider"></div>
+
+                  <h3 style={{ color: '#cd7f32', marginBottom: 12 }}>Adresse de livraison</h3>
+                  <input
+                    type="text"
+                    placeholder="Rue"
+                    value={shippingAddress.street}
+                    onChange={(e) => setShippingAddress({ ...shippingAddress, street: e.target.value })}
+                    className="address-input"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Ville"
+                    value={shippingAddress.city}
+                    onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
+                    className="address-input"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Code postal"
+                    value={shippingAddress.postal_code}
+                    onChange={(e) => setShippingAddress({ ...shippingAddress, postal_code: e.target.value })}
+                    className="address-input"
+                  />
+
+                  <h3 style={{ color: '#cd7f32', marginBottom: 12, marginTop: 20 }}>Adresse de facturation</h3>
+                  <input
+                    type="text"
+                    placeholder="Rue"
+                    value={billingAddress.street}
+                    onChange={(e) => setBillingAddress({ ...billingAddress, street: e.target.value })}
+                    className="address-input"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Ville"
+                    value={billingAddress.city}
+                    onChange={(e) => setBillingAddress({ ...billingAddress, city: e.target.value })}
+                    className="address-input"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Code postal"
+                    value={billingAddress.postal_code}
+                    onChange={(e) => setBillingAddress({ ...billingAddress, postal_code: e.target.value })}
+                    className="address-input"
+                  />
+
+                  {error && <p style={{ color: '#d4955f', marginTop: 12 }}>{error}</p>}
+
+                  <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
+                    <button
+                      onClick={() => { setStep('cart'); setError(null); }}
+                      className="btn-primary"
+                      style={{ flex: 1, padding: 12 }}
+                    >
+                      Retour
+                    </button>
+                    <button
+                      onClick={handleConfirmAddress}
+                      className="btn-checkout"
+                      style={{ flex: 1 }}
+                    >
+                      Continuer vers le paiement
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {step === 'payment' && (
                 <div className="payment-form">
                   <div className="summary-divider"></div>
 
@@ -388,11 +585,11 @@ const Cart = () => {
 
                   <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                     <button
-                      onClick={() => { setShowPayment(false); setError(null); }}
+                      onClick={() => { setStep('address'); setError(null); }}
                       className="btn-primary"
                       style={{ flex: 1, padding: 12 }}
                     >
-                      Annuler
+                      Retour
                     </button>
                     <button
                       onClick={handleConfirmPayment}
@@ -400,7 +597,7 @@ const Cart = () => {
                       disabled={paying}
                       style={{ flex: 1 }}
                     >
-                      {paying ? 'Paiement en cours…' : 'Confirmer le paiement'}
+                      {paying ? 'Traitement…' : 'Confirmer le paiement'}
                     </button>
                   </div>
                 </div>

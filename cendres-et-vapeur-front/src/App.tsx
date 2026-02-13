@@ -2,6 +2,8 @@ import { useState } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Header from "./components/Navbar";
 import Footer from "./layout/footer/Footer";
+import { NotificationProvider } from "./contexts/NotificationContext";
+import "./styles/notifications.css";
 
 import AdminHeader from "./layout/admin/AdminHeader";
 import AdminFooter from "./layout/admin/AdminFooter";
@@ -45,7 +47,7 @@ function AppContent() {
 
   return (
     <div className="app-container">
-        {/* Bouton toggle toxicité */}
+      {/* Bouton toggle toxicité */}
       <button
         onClick={() => setShowToxicity(!showToxicity)}
         style={{
@@ -71,38 +73,38 @@ function AppContent() {
         {showToxicity ? '×' : '☢'}
       </button>
 
-        {/* Indicateur de toxicité */}
+      {/* Indicateur de toxicité */}
       {showToxicity && (
-      <div style={{
-        position: 'fixed',
-        top: '10px',
-        right: '46px',
-        padding: '10px',
-        backgroundColor: isToxic ? '#ff0000' : '#00ff00',
-        color: isToxic ? '#ffffff' : '#000000',
-        borderRadius: '5px',
-        fontSize: '12px',
-        zIndex: 9999,
-        fontFamily: 'monospace'
-      }}>
-        <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
-          {apiData?.alert_level || 'UNKNOWN'} - {apiData?.status || 'UNKNOWN'}
-        </div>
-        <div>
-          Toxicité: {(toxicityLevel * 100).toFixed(1)}% / {(threshold * 100).toFixed(1)}%
-          {isToxic && ' ⚠️ TOXIQUE'}
-        </div>
-        {apiData?.pollution && (
-          <div style={{ fontSize: '10px', marginTop: '5px' }}>
-            S: {apiData.pollution.sulfur?.toFixed(1)} |
-            CO2: {apiData.pollution.carbon_dioxide?.toFixed(1)} |
-            P: {apiData.pollution.particulates?.toFixed(1)} |
-            O2: {apiData.pollution.oxygen?.toFixed(1)}
+        <div style={{
+          position: 'fixed',
+          top: '10px',
+          right: '46px',
+          padding: '10px',
+          backgroundColor: isToxic ? '#ff0000' : '#00ff00',
+          color: isToxic ? '#ffffff' : '#000000',
+          borderRadius: '5px',
+          fontSize: '12px',
+          zIndex: 9999,
+          fontFamily: 'monospace'
+        }}>
+          <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
+            {apiData?.alert_level || 'UNKNOWN'} - {apiData?.status || 'UNKNOWN'}
           </div>
-        )}
-      </div>
+          <div>
+            Toxicité: {(toxicityLevel * 100).toFixed(1)}% / {(threshold * 100).toFixed(1)}%
+            {isToxic && ' ⚠️ TOXIQUE'}
+          </div>
+          {apiData?.pollution && (
+            <div style={{ fontSize: '10px', marginTop: '5px' }}>
+              S: {apiData.pollution.sulfur?.toFixed(1)} |
+              CO2: {apiData.pollution.carbon_dioxide?.toFixed(1)} |
+              P: {apiData.pollution.particulates?.toFixed(1)} |
+              O2: {apiData.pollution.oxygen?.toFixed(1)}
+            </div>
+          )}
+        </div>
       )}
-      
+
       {isAdminRoute ? <AdminHeader /> : <Header />}
 
       <main className="main-content">
@@ -142,8 +144,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AppContent />
-    </BrowserRouter>
+    <NotificationProvider>
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
+    </NotificationProvider>
   );
 }

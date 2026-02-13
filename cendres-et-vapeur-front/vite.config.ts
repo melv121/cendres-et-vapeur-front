@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 const DEV_ORIGIN = 'http://localhost:5173';
-const TARGET = 'http://89.168.38.93';
+const TARGET = 'http://127.0.0.1:8000';
 
 function proxyConfig(target = TARGET) {
   return {
@@ -18,7 +18,7 @@ function proxyConfig(target = TARGET) {
           if (proxyRes.headers['location']) {
             proxyRes.headers['location'] = String(proxyRes.headers['location']).replace(target, DEV_ORIGIN);
           }
-        } catch (e) {}
+        } catch (e) { }
       });
     },
   };
@@ -28,11 +28,11 @@ function proxyConfig(target = TARGET) {
 export default defineConfig({
   plugins: [react()],
   server: {
+    middlewareMode: false,
     proxy: {
       '/colony-events/toxicity/status': proxyConfig(),
       '/api': proxyConfig(),
       '/products': proxyConfig(),
-      '/product': proxyConfig(),
       '/logs': proxyConfig(),
       '/stats': proxyConfig(),
       '/admin/stats': proxyConfig(),

@@ -3,31 +3,23 @@ import { useAuth } from "../contexts/AuthContext";
 import React from "react";
 
 interface RoleProtectedRouteProps {
-  allowedRoles: string[];
-  element: React.ReactElement;
+    allowedRoles: string[];
+    element: React.ReactElement;
 }
 
 const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({ allowedRoles, element }) => {
-  const { user, loading, isAuthenticated } = useAuth();
+    const { user, loading, isAuthenticated } = useAuth();
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+    if (loading) {
+        return <div>Loading...</div>;
+    }
 
-  const userRole = user?.role || "GUEST";
-  
-  console.log("RoleProtectedRoute check:", {
-    userRole,
-    allowedRoles,
-    isAuthenticated,
-    user,
-    hasAccess: allowedRoles.includes(userRole)
-  });
+    const userRole = (user?.role || "GUEST").toUpperCase();
 
-  if (!allowedRoles.includes(userRole)) {
-    return <Navigate to="/not-authorized" replace />;
-  }
-  return element;
+    if (!allowedRoles.includes(userRole)) {
+        return <Navigate to="/not-authorized" replace />;
+    }
+    return element;
 };
 
 export default RoleProtectedRoute;

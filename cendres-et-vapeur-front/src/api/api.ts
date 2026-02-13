@@ -11,6 +11,25 @@ const getHeaders = (): HeadersInit => {
   return headers;
 };
 
+// Load images with authentication
+const getAuthenticatedImageUrl = async (imageUrl: string): Promise<string> => {
+  try {
+    const response = await fetch(imageUrl, {
+      headers: getHeaders(),
+    });
+
+    if (!response.ok) {
+      console.warn(`Failed to load image: ${response.status}`);
+      return '';
+    }
+
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
+  } catch (error) {
+    console.error('Error loading authenticated image:', error);
+    return '';
+  }
+};
 
 const getUsers = async () => {
   const response = await fetch(`${API_BASE_URL}/users`, {
@@ -149,7 +168,7 @@ const deleteProduct = async (id: number) => {
 };
 
 const getPriceInfos = async (id: number) => {
-  const response = await fetch(`${API_BASE_URL}/products/${id}/price-infos`, {
+  const response = await fetch(`${API_BASE_URL}/products/${id}/price-info`, {
     headers: getHeaders(),
 
   });
@@ -165,19 +184,21 @@ const View = async (id: number) => {
   return response.json();
 };
 
-const Purchase = async (id: number) => {
+const Purchase = async (id: number, quantity: number = 1) => {
   const response = await fetch(`${API_BASE_URL}/products/${id}/purchase`, {
     method: 'POST',
     headers: getHeaders(),
-
+    body: JSON.stringify({ quantity }),
   });
   return response.json();
 };
 
-const Getbroadcast = async () => { 
-const response = await fetch(`${API_BASE_URL}/chat/users`, { 
-headers: getHeaders(), }); 
-return response.json(); };
+const Getbroadcast = async () => {
+  const response = await fetch(`${API_BASE_URL}/chat/users`, {
+    headers: getHeaders(),
+  });
+  return response.json();
+};
 
 const sendChatMessage = async (message: string, excludeId: number) => {
   const response = await fetch(`${API_BASE_URL}/mail/broadcast`, {
@@ -202,7 +223,7 @@ const getWsStatus = async (clientId: string) => {
     headers: getHeaders(),
   });
   return response.json();
-}; 
+};
 
 
 
@@ -317,6 +338,44 @@ const removeFromCart = async (userId: number, productId: number) => {
   });
   if (!response.ok) {
     throw new Error(`Erreur ${response.status}`);
+  }
+  return response.json();
+};
+
+const checkoutOrder = async (orderId: number) => {
+  const response = await fetch(`${API_BASE_URL}/orders/${orderId}/checkout`, {
+    method: 'POST',
+    headers: getHeaders(),
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    try { throw new Error(JSON.parse(text).detail || `Erreur ${response.status}`); }
+    catch { throw new Error(`Erreur ${response.status}: ${text}`); }
+  }
+  return response.json();
+};
+
+const confirmOrderDetails = async (orderId: number, shippingAddress: any, billingAddress: any) => {
+  const payload = {
+    shipping_address: shippingAddress?.street || '',
+    shipping_city: shippingAddress?.city || '',
+    shipping_postal_code: shippingAddress?.postal_code || '',
+    shipping_country: shippingAddress?.country || '',
+    billing_address: billingAddress?.street || '',
+    billing_city: billingAddress?.city || '',
+    billing_postal_code: billingAddress?.postal_code || '',
+    billing_country: billingAddress?.country || '',
+  };
+
+  const response = await fetch(`${API_BASE_URL}/orders/${orderId}/confirm-details`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    try { throw new Error(JSON.parse(text).detail || `Erreur ${response.status}`); }
+    catch { throw new Error(`Erreur ${response.status}: ${text}`); }
   }
   return response.json();
 };
@@ -439,7 +498,7 @@ export const updateShiftNotes = async (id: number, data: any) => {
 export const createShiftNote = async (data: any) => {
   const url = `${API_BASE_URL}/shift-notes/`;
   if (import.meta.env.VITE_DEBUG) {
-    try { console.debug('[api] createShiftNote ->', url, { method: 'POST', credentials: 'include' }); } catch {}
+    try { console.debug('[api] createShiftNote ->', url, { method: 'POST', credentials: 'include' }); } catch { }
   }
   const response = await fetch(url, {
     method: 'POST',
@@ -559,6 +618,10 @@ export const getProductVotes = async (id: number) => {
     credentials: 'include',
     headers: getHeaders(),
   });
+  if (!response.ok) {
+    console.warn(`Erreur API getProductVotes: ${response.status}`);
+    return []; // Retourner un tableau vide si pas de votes
+  }
   return response.json();
 };
 
@@ -655,10 +718,32 @@ export const getDashboardStats = async () => {
   };
 };
 
+export const uploadProductImage = async (productId: number, file: File) => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(`${API_BASE_URL}/products/${productId}/upload-image`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${localStorage.getItem('cev_auth_token')}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    console.error('Erreur upload image:', response.status, text);
+    throw new Error(`Erreur ${response.status}: ${text}`);
+  }
+
+  return response.json();
+};
+
 
 export {
   API_BASE_URL,
   getHeaders,
+  getAuthenticatedImageUrl,
   getUsers,
   getUserById,
   createUser,
@@ -682,6 +767,8 @@ export {
   emptyCart,
   updateCartItemQuantity,
   removeFromCart,
+  checkoutOrder,
+  confirmOrderDetails,
   downloadInvoice,
   processPayment,
   applyDiscount,

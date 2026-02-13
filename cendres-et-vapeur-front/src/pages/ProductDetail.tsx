@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { Product } from '../types/Product';
-import { productService } from '../services/productService';
 import { getShopProductById } from '../services/productShop';
-import { addToCart } from '../api/api';
+import { addToCart, voteProduct, getProductVotes } from '../api/api';
+import { ProductImage } from '../components/ProductImage';
+import { useNotification } from '../contexts/NotificationContext';
 import '../styles/ProductDetail.css';
 
 interface Comment {
@@ -18,6 +19,7 @@ interface Comment {
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { error: showError } = useNotification();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
@@ -31,6 +33,7 @@ const ProductDetail = () => {
   useEffect(() => {
     loadProduct();
     loadLikes();
+    loadComments();
   }, [id]);
 
   const loadProduct = async () => {
@@ -41,6 +44,9 @@ const ProductDetail = () => {
       console.log('Loading product with id:', id);
       const data = await getShopProductById(parseInt(id));
       console.log('Fetched product data:', data);
+      if (!data) {
+        console.error('Produit vide retourné par getShopProductById');
+      }
       setProduct(data || null);
     } catch (error) {
       console.error('Erreur lors du chargement du produit:', error);
@@ -166,7 +172,7 @@ const ProductDetail = () => {
       await loadLikes();
     } catch (error) {
       console.error('Erreur lors de l\'ajout du commentaire:', error);
-      alert('Erreur lors de l\'ajout du commentaire: ' + (error as any).message);
+      showError('Erreur lors de l\'ajout du commentaire: ' + (error as any).message);
     }
   };
 
@@ -191,7 +197,7 @@ const ProductDetail = () => {
       setAddedToCart(true);
       setTimeout(() => setAddedToCart(false), 2000);
     } catch (err: any) {
-      alert(err.message || 'Erreur lors de l\'ajout au panier');
+      showError(err.message || 'Erreur lors de l\'ajout au panier');
     }
   };
 
@@ -238,8 +244,8 @@ const ProductDetail = () => {
 
         <div className="product-detail-container">
           <div className="product-image-section">
-            {product.image && product.image.trim() ? (
-              <img src={product.image} alt={product.name} className="product-image-large" />
+            {product?.image ? (
+              <ProductImage src={product.image} alt={product.name} className="product-image-large" />
             ) : (
               <div className="image-placeholder-large">
                 <span>IMAGE PRODUIT</span>

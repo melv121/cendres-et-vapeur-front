@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useNotification } from "../contexts/NotificationContext";
 import "../styles/Contact.css";
 
 export default function Contact() {
+  const { success } = useNotification();
   const [form, setForm] = useState({
     nom: "",
     prenom: "",
@@ -18,7 +20,7 @@ export default function Contact() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log(form);
-    alert("Message envoyé !");
+    success("Message envoyé !");
   };
 
   return (

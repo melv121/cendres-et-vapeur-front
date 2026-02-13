@@ -1,5 +1,5 @@
 import type { Product } from '../types/Product';
-import { getHeaders } from '../api/api';
+import { getHeaders, API_BASE_URL } from '../api/api';
 
 interface ApiProduct {
   id: number;
@@ -36,13 +36,18 @@ function mapApiProductToProduct(apiProduct: ApiProduct): Product {
 
   const finalPrice = price ?? 0;
 
+  // Si image_url n'existe pas ou est vide, utiliser l'endpoint du backend
+  const imageUrl = apiProduct.image_url && apiProduct.image_url.trim()
+    ? apiProduct.image_url
+    : `/products/${apiProduct.id}/image`;
+
   return {
     id: apiProduct.id,
     name: apiProduct.name,
     description: apiProduct.description || '',
     base_price: finalPrice,
     current_price: finalPrice,
-    image: apiProduct.image_url || '',
+    image: imageUrl,
     stock: apiProduct.stock,
     popularity_score: 5.0,
     category_id: apiProduct.category_id
@@ -51,15 +56,15 @@ function mapApiProductToProduct(apiProduct: ApiProduct): Product {
 
 export async function getAllShopProducts(): Promise<Product[]> {
   try {
-    const response = await fetch('/products', {
+    const response = await fetch(`${API_BASE_URL}/products`, {
+      method: 'GET',
       headers: getHeaders(),
-      
     });
-    
+
     if (!response.ok) {
       throw new Error(`Erreur API: ${response.status}`);
     }
-    
+
     const apiProducts: ApiProduct[] = await response.json();
     return apiProducts.map(mapApiProductToProduct);
   } catch (error) {
@@ -97,13 +102,21 @@ export const getShopProductById = async (id: number): Promise<Product | undefine
   try {
     const response = await fetch(`/products/${id}`, {
       headers: getHeaders(),
-      
     });
-    if (!response.ok) throw new Error('Produit non trouvé');
+    if (!response.ok) {
+      console.warn(`Erreur API getShopProductById: ${response.status}`);
+      throw new Error('Produit non trouvé');
+    }
     const apiProduct: ApiProduct = await response.json();
     return mapApiProductToProduct(apiProduct);
-  } catch {
-    return SHOP_PRODUCTS_BACKUP.find(product => product.id === id);
+  } catch (error) {
+    console.warn(`Fallback utilisé pour le produit ${id}`, error);
+    const fallbackProduct = SHOP_PRODUCTS_BACKUP.find(product => product.id === id);
+    if (fallbackProduct) {
+      return fallbackProduct;
+    }
+    // Si l'ID n'est pas dans le backup, créer un produit vide
+    return undefined;
   }
 };
 
