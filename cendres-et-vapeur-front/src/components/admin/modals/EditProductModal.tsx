@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Product } from "../AdminProduct";
 import { uploadProductImage } from "../../../api/api";
+import { useNotification } from "../../../contexts/NotificationContext";
 import "../admin.css";
 
 type EditProductModalProps = {
@@ -26,6 +27,7 @@ export default function EditProductModal({
   onSave,
   onCreate,
 }: EditProductModalProps) {
+  const { success, error: showError } = useNotification();
   const isCreating = product === null;
   const [form, setForm] = useState<Omit<Product, 'id'> & { id?: number }>(
     product ? { ...product } : { ...defaultProduct }
@@ -38,7 +40,7 @@ export default function EditProductModal({
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
-        alert('Image trop volumineuse (max 2MB)');
+        showError('Image trop volumineuse (max 2MB)');
         return;
       }
 
@@ -53,11 +55,11 @@ export default function EditProductModal({
           uploadProductImage(product.id, file)
             .then((result) => {
               setForm({ ...form, image_url: result.image_url || `/products/${product.id}/image` });
-              alert('Image uploadée avec succès!');
+              success('Image uploadée avec succès!');
             })
             .catch((err) => {
               console.error('Erreur upload:', err);
-              alert('Erreur lors de l\'upload: ' + (err as any).message);
+              showError('Erreur lors de l\'upload: ' + (err as any).message);
             })
             .finally(() => {
               setUploading(false);
@@ -80,7 +82,7 @@ export default function EditProductModal({
     e.preventDefault();
 
     if (!form.name.trim()) {
-      alert('Le nom du produit est requis');
+      showError('Le nom du produit est requis');
       return;
     }
 

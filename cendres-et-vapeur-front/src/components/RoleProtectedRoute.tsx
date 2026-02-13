@@ -16,14 +16,6 @@ const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({ allowedRoles, e
 
     const userRole = (user?.role || "GUEST").toUpperCase();
 
-    console.log("RoleProtectedRoute check:", {
-        userRole,
-        allowedRoles,
-        isAuthenticated,
-        user,
-        hasAccess: allowedRoles.includes(userRole)
-    });
-
     if (!allowedRoles.includes(userRole)) {
         return <Navigate to="/not-authorized" replace />;
     }

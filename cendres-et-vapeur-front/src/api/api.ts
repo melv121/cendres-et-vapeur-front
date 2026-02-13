@@ -168,7 +168,7 @@ const deleteProduct = async (id: number) => {
 };
 
 const getPriceInfos = async (id: number) => {
-  const response = await fetch(`${API_BASE_URL}/products/${id}/price-infos`, {
+  const response = await fetch(`${API_BASE_URL}/products/${id}/price-info`, {
     headers: getHeaders(),
 
   });
@@ -184,11 +184,11 @@ const View = async (id: number) => {
   return response.json();
 };
 
-const Purchase = async (id: number) => {
+const Purchase = async (id: number, quantity: number = 1) => {
   const response = await fetch(`${API_BASE_URL}/products/${id}/purchase`, {
     method: 'POST',
     headers: getHeaders(),
-
+    body: JSON.stringify({ quantity }),
   });
   return response.json();
 };

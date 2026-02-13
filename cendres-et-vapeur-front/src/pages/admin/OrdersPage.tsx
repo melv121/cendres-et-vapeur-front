@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { getOrders, createOrder, updateOrder, deleteOrder } from "../../api/api";
+import { useNotification } from "../../contexts/NotificationContext";
 
 type Mode = "create" | "edit";
 
@@ -36,6 +37,7 @@ export default function OrdersPage() {
   const [mode, setMode] = useState<Mode>("create");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<OrderCreate>(emptyOrder);
+  const { success, confirm: showConfirm } = useNotification();
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -140,15 +142,17 @@ export default function OrdersPage() {
   }
 
   async function onDelete(id: number) {
-    const ok = confirm("Supprimer cette commande ?");
-    if (!ok) return;
-
-    try {
-      await deleteOrder(id);
-      setOrders((prev) => prev.filter((o) => o.id !== id));
-    } catch (e: any) {
-      setError(e.message || "Erreur lors de la suppression.");
-    }
+    showConfirm("Supprimer cette commande ?", {
+      onConfirm: async () => {
+        try {
+          await deleteOrder(id);
+          setOrders((prev) => prev.filter((o) => o.id !== id));
+          success("Commande supprimée");
+        } catch (e: any) {
+          setError(e.message || "Erreur lors de la suppression.");
+        }
+      },
+    });
   }
 
   return (

@@ -4,6 +4,7 @@ import type { Product } from '../types/Product';
 import { getShopProductById } from '../services/productShop';
 import { addToCart, voteProduct, getProductVotes } from '../api/api';
 import { ProductImage } from '../components/ProductImage';
+import { useNotification } from '../contexts/NotificationContext';
 import '../styles/ProductDetail.css';
 
 interface Comment {
@@ -18,6 +19,7 @@ interface Comment {
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { error: showError } = useNotification();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
@@ -170,7 +172,7 @@ const ProductDetail = () => {
       await loadLikes();
     } catch (error) {
       console.error('Erreur lors de l\'ajout du commentaire:', error);
-      alert('Erreur lors de l\'ajout du commentaire: ' + (error as any).message);
+      showError('Erreur lors de l\'ajout du commentaire: ' + (error as any).message);
     }
   };
 
@@ -195,7 +197,7 @@ const ProductDetail = () => {
       setAddedToCart(true);
       setTimeout(() => setAddedToCart(false), 2000);
     } catch (err: any) {
-      alert(err.message || 'Erreur lors de l\'ajout au panier');
+      showError(err.message || 'Erreur lors de l\'ajout au panier');
     }
   };
 

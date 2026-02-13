@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import EditProductModal from "./modals/EditProductModal";
 import { getProducts, createProduct, updateProduct, deleteProduct } from "../../api/api";
+import { useNotification } from "../../contexts/NotificationContext";
 import "./admin.css";
 
 export type Product = {
@@ -20,6 +21,7 @@ export default function AdminProducts() {
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Product | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const { success, error: showError, confirm: showConfirm } = useNotification();
 
   const total = useMemo(() => rows.length, [rows]);
 
@@ -74,7 +76,7 @@ export default function AdminProducts() {
       setIsCreating(false);
     } catch (err: any) {
       console.error('Erreur création produit:', err);
-      alert('Erreur lors de la création: ' + err.message);
+      showError('Erreur lors de la création: ' + err.message);
     }
   };
 
@@ -94,18 +96,22 @@ export default function AdminProducts() {
       setSelected(null);
     } catch (err: any) {
       console.error('Erreur mise à jour produit:', err);
-      alert('Erreur lors de la sauvegarde: ' + err.message);
+      showError('Erreur lors de la sauvegarde: ' + err.message);
     }
   };
 
   const onDelete = async (id: number) => {
-    if (!confirm('Supprimer ce produit ?')) return;
-    try {
-      await deleteProduct(id);
-      setRows((prev) => prev.filter((x) => x.id !== id));
-    } catch (err: any) {
-      alert('Erreur lors de la suppression: ' + err.message);
-    }
+    showConfirm('Supprimer ce produit ?', {
+      onConfirm: async () => {
+        try {
+          await deleteProduct(id);
+          setRows((prev) => prev.filter((x) => x.id !== id));
+          success('Produit supprimé');
+        } catch (err: any) {
+          showError('Erreur lors de la suppression: ' + err.message);
+        }
+      },
+    });
   };
 
   if (loading) {

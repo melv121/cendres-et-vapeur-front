@@ -4,6 +4,7 @@ import type { Product } from '../types/Product';
 import { getAllShopProducts } from '../services/productShop';
 import { addToCart } from '../api/api';
 import { ProductImage } from '../components/ProductImage';
+import { useNotification } from '../contexts/NotificationContext';
 import '../styles/Shop.css';
 
 function formatEUR(n: number | undefined | null) {
@@ -18,6 +19,7 @@ const Shop = () => {
 
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
+  const { success, error: showError } = useNotification();
 
   useEffect(() => {
     loadProducts();
@@ -48,9 +50,9 @@ const Shop = () => {
       setAddingId(productId);
       await addToCart(user.id, productId, 1);
       window.dispatchEvent(new Event('cartUpdated'));
-      alert('Produit ajouté au panier');
+      success('Produit ajouté au panier');
     } catch (err: any) {
-      alert(err.message || 'Erreur lors de l\'ajout au panier');
+      showError(err.message || 'Erreur lors de l\'ajout au panier');
     } finally {
       setAddingId(null);
     }

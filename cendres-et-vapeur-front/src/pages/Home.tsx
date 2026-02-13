@@ -4,12 +4,14 @@ import type { Product } from '../types/Product';
 import { productService } from '../services/productService';
 import { addToCart } from '../api/api';
 import { ProductImage } from '../components/ProductImage';
+import { useNotification } from '../contexts/NotificationContext';
 
 const Home: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [addingId, setAddingId] = useState<number | null>(null);
   const navigate = useNavigate();
+  const { success, error } = useNotification();
 
   useEffect(() => {
     loadProducts();
@@ -39,9 +41,9 @@ const Home: React.FC = () => {
       setAddingId(productId);
       await addToCart(user.id, productId, 1);
       window.dispatchEvent(new Event('cartUpdated'));
-      alert('Produit ajouté au panier');
+      success('Produit ajouté au panier');
     } catch (err: any) {
-      alert(err.message || 'Erreur lors de l\'ajout au panier');
+      error(err.message || 'Erreur lors de l\'ajout au panier');
     } finally {
       setAddingId(null);
     }
