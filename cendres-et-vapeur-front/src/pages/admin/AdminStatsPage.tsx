@@ -1,5 +1,5 @@
 import { useMemo, useEffect, useState } from "react";
-import { getDashboardStats } from "../../api/api";
+import { getAdminOrderStats } from "../../api/api";
 import "../admin/pagestyle/adminStats.css";
 
 //local save pour tester la page
@@ -61,7 +61,7 @@ export default function AdminStatsPage() {
       setLoading(true);
       setError(null);
       try {
-        const data: any = await getDashboardStats();
+        const data: any = await getAdminOrderStats();
         if (!mounted) return;
 
 

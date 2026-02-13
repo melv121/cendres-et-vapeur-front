@@ -428,6 +428,50 @@ const removeDiscount = async (orderId: number) => {
   return response.json();
 };
 
+const getAdminOrderStats = async () => {
+  try {
+    const [users, orders, products] = await Promise.all([
+      getUsers(),
+      getOrders(),
+      getProducts(),
+    ]);
+
+    const paidOrders = (orders || []).filter((o: any) => o.status === 'PAID' || o.status === 'paid');
+    const totalRevenue = paidOrders.reduce((sum: number, o: any) => sum + (Number(o.total_amount) || 0), 0);
+
+    const now = Date.now();
+    const ordersLast7Days = [];
+    for (let i = 6; i >= 0; i--) {
+      const dayStart = new Date(now - i * 86400000);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(dayStart);
+      dayEnd.setHours(23, 59, 59, 999);
+      const count = (orders || []).filter((o: any) => {
+        const d = new Date(o.created_at);
+        return d >= dayStart && d <= dayEnd;
+      }).length;
+      ordersLast7Days.push({ date: dayStart.toISOString(), count });
+    }
+
+    const top5 = [...(products || [])]
+      .sort((a: any, b: any) => (b.current_price || 0) - (a.current_price || 0))
+      .slice(0, 5);
+
+    return {
+      total_users: (users || []).length,
+      total_orders: (orders || []).length,
+      total_paid_orders: paidOrders.length,
+      total_revenue: totalRevenue,
+      average_order_value: paidOrders.length > 0 ? totalRevenue / paidOrders.length : 0,
+      top_products: top5,
+      orders_last_7_days: ordersLast7Days,
+    };
+  } catch (error) {
+    console.error('Erreur getAdminOrderStats:', error);
+    throw new Error(`Erreur lors de la récupération des stats: ${error}`);
+  }
+};
+
 const login = async (email: string, password: string) => {
   const response = await fetch(`${API_BASE_URL}/api/auth/login/`, {
     method: 'POST',
@@ -689,7 +733,7 @@ export const getDashboardStats = async () => {
   ]);
 
   const paidOrders = (orders || []).filter((o: any) => o.status === 'paid');
-  const totalRevenue = paidOrders.reduce((sum: number, o: any) => sum + (o.total_amount || 0), 0);
+  const totalRevenue = paidOrders.reduce((sum: number, o: any) => sum + (Number(o.total_amount) || 0), 0);
 
   const now = Date.now();
   const ordersLast7Days = [];
@@ -773,6 +817,7 @@ export {
   processPayment,
   applyDiscount,
   removeDiscount,
+  getAdminOrderStats,
   login,
   verify2FA,
   register,
