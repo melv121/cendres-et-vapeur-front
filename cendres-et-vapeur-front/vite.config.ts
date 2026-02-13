@@ -2,7 +2,8 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 const DEV_ORIGIN = 'http://localhost:5173';
-const TARGET = 'http://89.168.38.93/';
+const TARGET = 'http://localhost:8000/'; // Replace with your actual backend server URL
+const WS_TARGET = 'ws://localhost:8000/'; // Replace with your actual WebSocket server URL
 
 function proxyConfig(target = TARGET) {
   return {
@@ -42,12 +43,12 @@ export default defineConfig({
       '/users': proxyConfig(),
       '/categories': proxyConfig(),
       '/mail': {
-        target: 'ws://89.168.38.93',
+        target: WS_TARGET,
         ws: true,
         changeOrigin: true,
       },
       '/chat': {
-        target: 'ws://89.168.38.93',
+        target: WS_TARGET,
         ws: true,
         changeOrigin: true,
       },

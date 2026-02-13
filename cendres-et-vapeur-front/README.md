@@ -1,11 +1,93 @@
-# React + TypeScript + Vite
+# Cendres et Vapeur - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + TypeScript + Vite application for the Cendres et Vapeur project.
 
-Currently, two official plugins are available:
+## Environment Setup
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Prerequisites
+- Node.js (v18 or higher)
+- npm or yarn
+
+### Environment Variables
+
+Create a `.env` file in the root directory based on `.env.example`:
+
+```bash
+cp .env.example .env
+```
+
+#### Available Variables
+
+- **`VITE_API_URL`** (optional in development)
+  - The base URL of your backend API
+  - In **development mode**: Leave empty `''` - Vite proxy will handle routing to backend
+  - In **production**: Set to your production API URL (e.g., `https://api.example.com`)
+  
+- **`VITE_APP_NAME`** (default: `Cendres et Vapeur`)
+  - Application name displayed in the UI
+  
+- **`VITE_APP_VERSION`** (default: `1.0.0`)
+  - Current version of the application
+  
+- **`VITE_DEBUG`** (default: `false`)
+  - Enable detailed console logging for debugging
+  - Set to `true` for verbose API call logs
+
+### Development Server Configuration
+
+The Vite development server (running on `http://localhost:5173`) is configured to proxy API requests to the backend server at `http://89.168.38.93/`. This configuration is in `vite.config.ts`.
+
+Proxied routes:
+- `/api/*` - Main API endpoints
+- `/products/*` - Product endpoints
+- `/shift-notes/*` - Shift notes management
+- `/orders/*` - Order management
+- `/users/*` - User management
+- `/stats/*` - Statistics
+- `/logs/*` - Logs
+- `/categories/*` - Product categories
+- `/colony-events/*` - Colony events
+- WebSocket connections for `/mail` and `/chat`
+
+### Installation
+
+```bash
+npm install
+```
+
+### Running the Application
+
+```bash
+# Development mode (with hot reload)
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+## Project Structure
+
+- `src/api/` - API client and endpoints
+- `src/components/` - Reusable React components
+- `src/contexts/` - React contexts (Auth, Notifications)
+- `src/hooks/` - Custom React hooks
+- `src/pages/` - Page components
+- `src/services/` - Business logic services
+- `src/styles/` - Global styles
+- `src/types/` - TypeScript type definitions
+
+## Technology Stack
+
+## Technology Stack
+
+- **React 18** - UI framework
+- **TypeScript** - Type safety
+- **Vite** - Build tool and dev server
+- **React Router** - Client-side routing
+- **ESLint** - Code linting
 
 ## React Compiler
 
