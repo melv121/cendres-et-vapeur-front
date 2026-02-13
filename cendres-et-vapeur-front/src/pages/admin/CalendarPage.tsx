@@ -209,7 +209,10 @@ export default function CalendarPage() {
                     key={key}
                     type="button"
                     className={`calCell ${inMonth ? "" : "muted"} ${isSelected ? "selected" : ""}`}
-                    onClick={() => setSelectedDate(key)}
+                    onClick={() => {
+                      setSelectedDate(key);
+                      setCreateForm((p) => ({ ...p, date: key }));
+                    }}
                   >
                     <div className="calCellTop">
                       <span className="calDayNum">{d.getDate()}</span>

@@ -2,13 +2,14 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 const DEV_ORIGIN = 'http://localhost:5173';
-const TARGET = 'http://127.0.0.1:8000';
+const TARGET = 'http://89.168.38.93/';
 
 function proxyConfig(target = TARGET) {
   return {
     target,
     changeOrigin: true,
     secure: false,
+    followRedirects: true,
     configure: (proxy: any) => {
       proxy.on && proxy.on('proxyRes', (proxyRes: any) => {
         try {

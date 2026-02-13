@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
-const API_BASE_URL = '';
+
+const API_BASE_URL = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || '');
 const TOXICITY_THRESHOLD = 0.95;
 
 const getHeaders = () => ({
